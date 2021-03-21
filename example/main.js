@@ -6,6 +6,8 @@ const express = require('express');
 
 const unologin = require('../src/main');
 
+const cookieParser = require('cookie-parser');
+
 const { 
   onAuthError,
   parseLogin,
@@ -40,6 +42,9 @@ onAuthError(function(req, res)
 });
 
 const app = express();
+
+// unologin middleware requires a cookie parser
+app.use(cookieParser());
 
 // this handles your login events
 // the url http(s)://<your api domain>/unologin/login must be set as your loginHandler in the dashboard

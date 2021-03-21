@@ -2,7 +2,7 @@
   "name": "@unologin/node-api",
   "version": "1.0.0",
   "description": "Minimal example implementation of unologin using express.",
-  "main": "build/api.js",
+  "main": "build/main.js",
   "scripts": {
     "build": "tsc",
     "example": "ts-node-dev ./example/main.js",
@@ -28,6 +28,7 @@
   "homepage": "https://github.com/unologin/node-api#readme",
   "devDependencies": {
     "@types/chai": "^4.2.15",
+    "@types/cookie-parser": "^1.4.2",
     "@types/express": "^4.17.11",
     "@types/mocha": "^8.2.2",
     "@types/node": "^14.14.35",
@@ -49,7 +50,6 @@
     "superagent": "^6.1.0"
   },
   "peerDependencies": {
-    "@types/cookie-parser": "^1.4.2",
     "cookie-parser": "^1.4.5",
     "express": "^4.17.1"
   }
