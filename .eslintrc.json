@@ -1,0 +1,22 @@
+{
+  "env":
+  {
+    "node": true,
+    "commonjs": true,
+    "es2021": true,
+    "mocha": true
+  },
+  "extends":"@unologin/eslint-config",
+  "parserOptions":
+  {
+    "ecmaVersion":12
+  },
+  "rules": 
+  {
+    "valid-jsdoc": "off",
+    "require-jsdoc": "off"
+  },
+  "globals":{
+    "__base": true
+  }
+}

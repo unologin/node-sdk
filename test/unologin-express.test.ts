@@ -1,0 +1,138 @@
+
+/**
+ * Tests for the express implementation
+ */
+
+import express from 'express';
+import { mock, supermock } from 'express-supermock';
+
+import supertest from 'supertest';
+
+import proxyquire from 'proxyquire';
+import { assert } from 'chai';
+
+import mockApi from './mock';
+
+import cookieParser from 'cookie-parser';
+
+
+// @ts-ignore
+supermock['@global'] = true;
+
+mock('api.unolog.in', { router: mockApi });
+
+const unologin = proxyquire('../src/main', { superagent: supermock });
+
+const { 
+  onAuthError,
+  parseLogin,
+  requireLogin,
+  loginEventHandler, 
+} = proxyquire(
+  '../src/unologin-express',
+  {
+    './api': unologin,
+  },
+);
+
+const app = express();
+
+// setup unologin
+unologin.setup(
+  {
+    apiKey: 'abc123',
+    cookiesDomain: '.example.com',
+  },
+);
+
+app.use(express.json());
+app.use(cookieParser());
+
+app.post('/unologin/login', loginEventHandler);
+
+app.all('*', parseLogin);
+
+app.all('/me/*', requireLogin);
+
+app.all('*', (req, res) => 
+{
+  res.send({ user: res.locals.unologin?.user });
+});
+
+describe('parseLogin', () => 
+{
+
+  it('does nothing when not providing any login cookie', async () => 
+  {
+    const res = await supertest(app).post('/public')
+      .send()
+      .expect(200);
+
+    const { user } = JSON.parse(res.text);
+
+    assert.strictEqual(user, undefined);
+
+  });
+
+  it('error code when using an invalid cookie where not required', async () => 
+  {
+    await supertest(app).post('/public')
+      .set('Cookie', ['_uno_appLoginToken=invalid'])
+      .send()
+      .expect(401);
+
+  });
+
+  it('parses the login info if valid', async () => 
+  {
+    const res = await supertest(app).post('/public')
+      .set('Cookie', [''])
+      .send()
+      .expect(200);
+
+    const { user } = JSON.parse(res.text);
+
+    assert.strictEqual(user, undefined);
+
+  });
+
+});
+
+describe('requireLogin', () => 
+{
+  it('error code when missing cookie where required', async () => 
+  {
+    await supertest(app).post('/me/test')
+      .send()
+      .expect(401);
+
+  });
+
+  it('error code when using an invalid cookie where required', async () => 
+  {
+    await supertest(app).post('/me/test')
+      .set('Cookie', ['_uno_appLoginToken=invalid'])
+      .send()
+      .expect(401);
+  });
+
+});
+
+describe('custom error handlers', () => 
+{
+  it('executes the custom handler', async () => 
+  {
+    // register a custom handler
+    onAuthError((req, res) =>
+    {
+      res.status(314);
+      res.send('custom error');
+    });
+
+    await supertest(app).post('/me/test')
+      .set('Cookie', ['_uno_appLoginToken=invalid'])
+      .send()
+      .expect(314);
+  });
+
+});
