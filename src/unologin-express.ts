@@ -1,5 +1,5 @@
 
-import { getOptions, verifyLoginToken } from './api';
+import { getOptions, verifyLoginToken } from './main';
 
 import { Request, Response, NextFunction, CookieOptions } from 'express';
 

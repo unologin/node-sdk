@@ -3,7 +3,7 @@
   {
     "target": "ES6",
     "module": "commonjs",
-    "declaration": false,
+    "declaration": true,
     "outDir": "./build",
     "strict": false,
     "esModuleInterop": true,

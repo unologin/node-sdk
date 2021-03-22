@@ -14,7 +14,7 @@ const {
   requireLogin,
   loginEventHandler,
   logoutHandler,
-} = unologin.express();
+} = unologin.express;
 
 // setup unologin
 unologin.setup(

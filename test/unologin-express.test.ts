@@ -33,7 +33,7 @@ const {
 } = proxyquire(
   '../src/unologin-express',
   {
-    './api': unologin,
+    './main': unologin,
   },
 );
 

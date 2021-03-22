@@ -12,7 +12,7 @@ import { assert } from 'chai';
 
 mock('api.unolog.in', { router: mockApi });
 
-const unologin = proxyquire('../src/api', { superagent: supermock });
+const unologin = proxyquire('../src/main', { superagent: supermock });
 
 unologin.setup({ apiKey: 'abc123' });
 
