@@ -1,7 +1,47 @@
 
 import { getOptions, verifyLoginToken } from './api';
 
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, CookieOptions } from 'express';
+
+// should cookies use the "secure" attribute?
+let useSecureCookies = true;
+
+// default cookie options
+const cookies =
+{
+  // secure session cookie for the server to read
+  login: 
+  {
+    name: '_uno_appLoginToken',
+    options: <CookieOptions>
+    {
+      httpOnly: true,
+      // always use secure cookies if not in dev environment
+      // this is redundant as debug_useSecureCookies will be ignored but it won't hurt
+      secure: useSecureCookies || (process.env.NODE_ENV !== 'development'),
+    },
+  },
+  // login state for client scripts to read
+  loginState:
+  {
+    name: '_uno_loginState',
+    options: 
+    {
+      httpOnly: false,
+      secure: useSecureCookies || (process.env.NODE_ENV !== 'development'),
+    },
+  },
+};
+
+/**
+ * Completes cookie options
+ * @param opts cookie options
+ * @returns default cookie options
+ */
+function completeCookieOptions(opts : CookieOptions) : CookieOptions
+{
+  return { ...opts, domain: getOptions().cookiesDomain };
+}
 
 // not using "next" on auth errors because the request MUST be blocked
 type AuthErrorHandler = (
@@ -14,6 +54,38 @@ let authErrorHandler : AuthErrorHandler = (req, res) =>
   res.status(401);
   res.send(res.locals.unologin?.msg || 'unknown error');
 };
+
+/**
+ * [FOR LOCAL TESTING ONLY] allows to enable/disable secure cookies.
+ * @param b useSecureCookies
+ * @returns void
+ */
+export function
+// eslint-disable-next-line camelcase
+debug_useSecureCookies(b : boolean)
+{
+  if (process.env.NODE_ENV === 'development')
+  {
+    useSecureCookies = b;
+
+    if (!b)
+    {
+      console.log(
+        '\x1b[31m',
+        '[UNOLOGIN EXPRESS] SECURE COOKIES HAVE BEEN DISABLED.\n' +
+        '                   DO THIS FOR LOCAL TESTING ONLY!',
+      );
+    }
+  }
+  else 
+  {
+    console.log(
+      '\x1b[31m',
+      '[UNOLOGIN EXPRESS] REFUSING debug_useSecureCookies call.\n' +
+      '                   NODE_ENV != "development"!',
+    );
+  }
+}
 
 /**
  * Decide what to do on auth error. 
@@ -79,6 +151,7 @@ export async function parseLogin(
  * @param req express req
  * @param res express res
  * @param next express next
+ * @returns void
  */
 export async function requireLogin(
   req : Request,
@@ -103,6 +176,7 @@ export async function requireLogin(
  * 
  * @param req express req
  * @param res express res
+ * @returns void
  */
 export async function loginEventHandler(
   req : Request,
@@ -110,7 +184,7 @@ export async function loginEventHandler(
 )
 {
   // token provided by the user
-  const token = req.query.token as string;
+  const token = (req.query.token || req.body.token) as string;
 
   // verify the login token
   const { user, msg } = await verifyLoginToken(token);
@@ -118,25 +192,20 @@ export async function loginEventHandler(
   // the token is valid
   if (user)
   {
+    // [!] TODO: expiration
     res.cookie(
-      '_uno_appLoginToken',
+      cookies.login.name,
       token,
       {
-        // disallow any scripts to read the cookie
-        httpOnly: true,
-        // enable the cookie for certain domains
-        domain: getOptions().cookiesDomain,
+        ...completeCookieOptions(cookies.login.options),
       },
     );
 
     res.cookie(
-      '_uno_loginState',
+      cookies.loginState.name,
       'success',
       {
-        // allow scripts to read the cookie
-        httpOnly: false,
-        // enable the cookie for certain domains
-        domain: getOptions().cookiesDomain,
+        ...completeCookieOptions(cookies.loginState.options),
       },
     );
   }
@@ -150,4 +219,38 @@ export async function loginEventHandler(
   res.redirect(url.href);
 
   res.send();
+}
+
+/**
+ * Logs out a user and calls next()
+ * 
+ * @param req express 
+ * @param res express
+ * @param next express
+ * @returns void
+ */
+export function logoutHandler(
+  req : Request,
+  res : Response,
+  next : NextFunction,
+)
+{
+  // reset all cookies
+  for (const cookie of Object.values(cookies))
+  {
+    // reset the cookie by immediately expiring it
+    res.cookie(
+      cookie.name,
+      // replace the value
+      'deleted',
+      {
+        // changing a cookie requires the same options
+        ...completeCookieOptions(cookie.options),
+        // maxAge: 0 has shown some weird behavior
+        maxAge: 1,
+      },
+    );
+  }
+
+  next();
 }

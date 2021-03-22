@@ -36,7 +36,7 @@ let options : Setup =
 };
 
 /**
- * @param param0 setup
+ * @param opts setup
  * @returns void
  */
 export function setup(opts: Partial<Setup>) : void
@@ -53,9 +53,10 @@ export function getOptions() : Setup
 }
 
 /**
- * 
+ * @param method http method
  * @param loc url relative to api url
  * @param body request data
+ * @returns response
  */
 export async function request(
   method: string,

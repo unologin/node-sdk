@@ -8,11 +8,12 @@ const unologin = require('../src/main');
 
 const cookieParser = require('cookie-parser');
 
-const { 
+const {
   onAuthError,
   parseLogin,
   requireLogin,
-  loginEventHandler, 
+  loginEventHandler,
+  logoutHandler,
 } = unologin.express();
 
 // setup unologin
@@ -29,6 +30,14 @@ unologin.setup(
     },
   },
 );
+
+// you can disable secure cookies when testing locally without https
+if (process.env.UNOLOGIN_DEBUG_DISABLE_SECURE === 'true')
+{
+  // unologin will refuse to to this if process.env.NODE_ENV is not development
+  // but you should not rely on that alone. 
+  unologin.debug_useSecureCookies(false);
+}
 
 // OPTIONAL: decide what happens if
 // 1. a user is not logged in where requireLogin is active (see below) or
@@ -58,6 +67,13 @@ app.use('*', parseLogin);
 // you can then use requireLogin to make sure a user is logged in for certain actions
 // IMPORTANT: this requires that parseLogin has been added to the app before
 app.use('/me/*', requireLogin);
+
+// the logoutHandler will delete all login related cookies and then call next()
+// this means that you can call res.send() yourself
+app.post('/logout', logoutHandler, function(req, res)
+{
+  res.send('We hope to have you back soon!');
+});
 
 app.listen(8081, () => 
 {

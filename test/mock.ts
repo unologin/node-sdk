@@ -8,6 +8,10 @@ export default router;
 
 const tokens : { [token: string]: object } = {};
 
+/**
+ * @param user user
+ * @returns valid login token for the mock api
+ */
 export function createToken(user : object)
 {
   // make sure all valid tokens start with 'valid-'

@@ -11,11 +11,6 @@
   {
     "ecmaVersion":12
   },
-  "rules": 
-  {
-    "valid-jsdoc": "off",
-    "require-jsdoc": "off"
-  },
   "globals":{
     "__base": true
   }
