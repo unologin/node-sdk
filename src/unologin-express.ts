@@ -25,7 +25,7 @@ const cookies =
   loginState:
   {
     name: '_uno_loginState',
-    options: 
+    options: <CookieOptions>
     {
       httpOnly: false,
       secure: useSecureCookies || (process.env.NODE_ENV !== 'development'),
