@@ -16,9 +16,6 @@ const cookies =
     options: <CookieOptions>
     {
       httpOnly: true,
-      // always use secure cookies if not in dev environment
-      // this is redundant as debug_useSecureCookies will be ignored but it won't hurt
-      secure: useSecureCookies || (process.env.NODE_ENV !== 'development'),
     },
   },
   // login state for client scripts to read
@@ -28,7 +25,6 @@ const cookies =
     options: <CookieOptions>
     {
       httpOnly: false,
-      secure: useSecureCookies || (process.env.NODE_ENV !== 'development'),
     },
   },
 };
@@ -40,7 +36,13 @@ const cookies =
  */
 function completeCookieOptions(opts : CookieOptions) : CookieOptions
 {
-  return { ...opts, domain: getOptions().cookiesDomain };
+  return {
+    ...opts,
+    domain: getOptions().cookiesDomain,
+    // always use secure cookies if not in dev environment
+    // this is redundant as debug_useSecureCookies will be ignored but it won't hurt
+    secure: useSecureCookies || (process.env.NODE_ENV !== 'development'),
+  };
 }
 
 // not using "next" on auth errors because the request MUST be blocked
@@ -221,6 +223,7 @@ export async function loginEventHandler(
   // the token is valid
   if (user)
   {
+    console.log(completeCookieOptions(cookies.login.options));
     // [!] TODO: expiration
     res.cookie(
       cookies.login.name,
