@@ -123,21 +123,28 @@ export async function parseLogin(
 
   res.locals.unologin ||= {};
   
+  // only try to parse the token if the user provides one
   if (token)
   {
-    const { user, msg } = await verifyLoginToken(token);
-    
-    if (user)
+    try
     {
-      res.locals.unologin.user = user;
+      res.locals.unologin.user = await verifyLoginToken(token);
 
       next();
     }
-    else
+    catch (e)
     {
-      res.locals.unologin.msg = msg;
+      if (e.isAuthError?.())
+      {
+        res.locals.unologin.msg = e.message;
 
-      await authErrorHandler(req, res);
+        await authErrorHandler(req, res);
+      }
+      else
+      {
+        // pass the error to the express error handler
+        next(e);
+      }
     }
   }
   else 
@@ -178,18 +185,38 @@ export async function requireLogin(
  * 
  * @param req express req
  * @param res express res
+ * @param next express next
  * @returns void
  */
 export async function loginEventHandler(
   req : Request,
   res : Response,
+  next : NextFunction,
 )
 {
   // token provided by the user
   const token = (req.query.token || req.body.token) as string;
 
   // verify the login token
-  const { user, msg } = await verifyLoginToken(token);
+  let user;
+  let msg;
+
+  try
+  {
+    user = await verifyLoginToken(token);
+  }
+  catch (e)
+  {
+    if (e.isAuthError?.())
+    {
+      msg = e.message;
+    }
+    else
+    {
+      next(e);
+      return;
+    }
+  }
 
   // the token is valid
   if (user)

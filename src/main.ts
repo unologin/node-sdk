@@ -4,6 +4,7 @@ import superagent from 'superagent';
 import path from 'path';
 
 import * as expressMiddleware from './unologin-express';
+import { APIError } from './errors';
 
 export const express = expressMiddleware;
 
@@ -62,11 +63,11 @@ export function getOptions() : Setup
  * @param body request data
  * @returns response
  */
-export async function request(
+export async function request<ReturnType = unknown>(
   method: string,
   loc: string,
   body: object = {},
-) : Promise<unknown>
+) : Promise<ReturnType>
 {
   const response : superagent.Response = await superagent(
     method,
@@ -92,28 +93,27 @@ export async function request(
   }
   catch (e)
   {
+    // should only happen if the apiUrl is not configured properly
     throw new Error('Cannot parse API response: ' + response.text);
   }
 
   if (error.code === 200)
   {
-    return result;
+    return result as ReturnType;
   }
-  else
+  else 
   {
-    throw error;
+    throw new APIError(
+      error.code,
+      error.msg,
+      error.data,
+    );
   }
 }
 
 export interface User
 {
   asuId: string;
-}
-
-export interface TokenValidationResult
-{
-  user?: User;
-  msg?: string;
 }
 
 /**
@@ -127,33 +127,19 @@ export async function verifyLoginToken(
   token: string,
   args: object = {},
 ) 
-: Promise<TokenValidationResult>
+: Promise<User>
 {
-  try 
-  {
-    const user = await request(
-      'POST',
-      '/users/auth',
+  const user = await request<User>(
+    'POST',
+    '/users/auth',
+    {
+      user: 
       {
-        user: 
-        {
-          appLoginToken: token,
-        },
-        ...args,
+        appLoginToken: token,
       },
-    ) as { asuId: string, userClasses: string[] };
+      ...args,
+    },
+  );
 
-    return { user };
-  }
-  catch (e)
-  {
-    if (e.data?.param === 'user')
-    {
-      return { msg: e.msg };
-    }
-    else
-    {
-      throw e;
-    }
-  }
+  return user;
 }

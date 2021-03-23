@@ -8,7 +8,10 @@ import mockApi, { createToken } from './mock';
 import { mock, supermock } from 'express-supermock';
 
 import proxyquire from 'proxyquire';
-import { assert } from 'chai';
+import chai, { expect, assert } from 'chai';
+import chaiAsPromised from 'chai-as-promised';
+
+chai.use(chaiAsPromised);
 
 mock('api.unolog.in', { router: mockApi });
 
@@ -20,37 +23,30 @@ describe('verifyLoginToken', () =>
 {
   it('returns an error for missing tokens', async () =>   
   {
-    const { user, msg } = await unologin.verifyLoginToken(undefined);
-
-    assert.strictEqual(user, undefined);
-
-    assert.strictEqual(msg, 'invalid token');
+    await expect(unologin.verifyLoginToken(undefined))
+      .to.eventually.rejected.then(
+        (e) => assert(e.isAuthError?.()),
+      );
   });
 
   it('returns an error for invalid tokens', async () =>   
   {
-    const { user, msg } = await unologin.verifyLoginToken('invalid');
-
-    assert.strictEqual(user, undefined);
-
-    assert.strictEqual(msg, 'invalid token');
+    await expect(unologin.verifyLoginToken('invalid'))
+      .to.eventually.rejected.then(
+        (e) => assert(e.isAuthError?.()),
+      );
   });
 
   it('returns user info for valid tokens', async () =>   
   {
-    const mockUser = 
+    const user = 
     {
       asuId: '5ebac35e9bdf9a2ebbb8e92f',
       userClasses: ['users_default'],
     };
 
-    const { user, msg } = await unologin.verifyLoginToken(
-      createToken(mockUser),
-    );
-
-    assert.strictEqual(msg, undefined);
-
-    assert.deepStrictEqual(user, mockUser);
+    await expect(unologin.verifyLoginToken(createToken(user)))
+      .to.eventually.deep.equal(user);
   });
 });
 
