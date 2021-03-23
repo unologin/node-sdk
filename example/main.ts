@@ -46,8 +46,12 @@ onAuthError(function(req, res)
 {
   // this is actually the default behavior, but you can do anything you want in here
   // if you're fine with the default behavior, simply skip onAuthError(...)
+
+  // you can actually call the logoutHandler as a function when not providing next()
+  // this will cause the user to get logged out 
+  logoutHandler(req, res);
   res.status(401);
-  res.send(res.locals.unologin?.msg || 'unknown error');
+  res.send('Auth error: ' + res.locals.unologin?.msg || 'unknown error');
 });
 
 const app = express();

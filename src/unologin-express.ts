@@ -47,12 +47,14 @@ function completeCookieOptions(opts : CookieOptions) : CookieOptions
 type AuthErrorHandler = (
   req : Request,
   res : Response,
-) => unknown;
+) => unknown | Promise<unknown>;
 
 let authErrorHandler : AuthErrorHandler = (req, res) =>
 {
+  logoutHandler(req, res);
+
   res.status(401);
-  res.send(res.locals.unologin?.msg || 'unknown error');
+  res.send('Auth error: ' + res.locals.unologin?.msg || 'unknown error');
 };
 
 /**
@@ -232,7 +234,7 @@ export async function loginEventHandler(
 export function logoutHandler(
   req : Request,
   res : Response,
-  next : NextFunction,
+  next?: NextFunction,
 )
 {
   // reset all cookies
@@ -252,5 +254,5 @@ export function logoutHandler(
     );
   }
 
-  next();
+  next?.();
 }

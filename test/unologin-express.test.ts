@@ -201,6 +201,48 @@ describe('requireLogin', () =>
 
 });
 
+describe('logoutHandler', () => 
+{
+  it('expires all cookies when called as a function', async () => 
+  {
+    const { headers } = await supertest(app).post('/me/test')
+      .set('Cookie', ['_uno_appLoginToken=invalid'])
+      .send()
+      .expect(401);
+
+    const loginCookie = setCookieParser.parseString(headers['set-cookie'][0]);
+    const statusCookie = setCookieParser.parseString(headers['set-cookie'][1]);
+
+    assert(
+      statusCookie.expires <= new Date(),
+      'status cookie has not expired ' + headers['set-cookie'][1],
+    );
+    assert(
+      loginCookie.expires <= new Date(),
+      'login cookie has not expired ' + headers['set-cookie'][1],
+    );
+  });
+
+  it('expires all cookies when used as middleware', async () => 
+  {
+    const { headers } = await supertest(app).post('/logout')
+      .send()
+      .expect(200);
+
+    const loginCookie = setCookieParser.parseString(headers['set-cookie'][0]);
+    const statusCookie = setCookieParser.parseString(headers['set-cookie'][1]);
+
+    assert(
+      statusCookie.expires <= new Date(),
+      'status cookie has not expired ' + headers['set-cookie'][1],
+    );
+    assert(
+      loginCookie.expires <= new Date(),
+      'login cookie has not expired ' + headers['set-cookie'][1],
+    );
+  });
+});
+
 describe('custom error handlers', () => 
 {
   it('executes the custom handler', async () => 
