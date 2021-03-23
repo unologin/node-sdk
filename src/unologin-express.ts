@@ -75,7 +75,7 @@ debug_useSecureCookies(b : boolean)
     if (!b)
     {
       console.log(
-        '\x1b[31m',
+        '\x1b[31m%s\x1b[0m',
         '[UNOLOGIN EXPRESS] SECURE COOKIES HAVE BEEN DISABLED.\n' +
         '                   DO THIS FOR LOCAL TESTING ONLY!',
       );
@@ -84,7 +84,7 @@ debug_useSecureCookies(b : boolean)
   else 
   {
     console.log(
-      '\x1b[31m',
+      '\x1b[31m%s\x1b[0m',
       '[UNOLOGIN EXPRESS] REFUSING debug_useSecureCookies call.\n' +
       '                   NODE_ENV != "development"!',
     );
@@ -223,7 +223,6 @@ export async function loginEventHandler(
   // the token is valid
   if (user)
   {
-    console.log(completeCookieOptions(cookies.login.options));
     // [!] TODO: expiration
     res.cookie(
       cookies.login.name,
