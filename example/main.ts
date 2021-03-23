@@ -36,7 +36,7 @@ if (process.env.UNOLOGIN_DEBUG_DISABLE_SECURE === 'true')
 {
   // unologin will refuse to to this if process.env.NODE_ENV is not development
   // but you should not rely on that alone. 
-  unologin.debug_useSecureCookies(false);
+  unologin.express.debug_useSecureCookies(false);
 }
 
 // OPTIONAL: decide what happens if
