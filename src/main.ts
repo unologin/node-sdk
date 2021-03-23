@@ -80,7 +80,20 @@ export async function request(
     'X-API-Key', options.apiKey,
   ).send(body);
 
-  const { result, error } = JSON.parse(response.text);
+  let result;
+  let error;
+
+  try
+  {
+    const parsed = JSON.parse(response.text);
+
+    result = parsed.result;
+    error = parsed.error;
+  }
+  catch (e)
+  {
+    throw new Error('Cannot parse API response: ' + response.text);
+  }
 
   if (error.code === 200)
   {
