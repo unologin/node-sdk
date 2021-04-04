@@ -1,7 +1,7 @@
 {
   "name": "@unologin/node-api",
   "version": "1.0.0",
-  "description": "Minimal example implementation of unologin using express.",
+  "description": "unologin node api including express handlers",
   "main": "build/main.js",
   "scripts": {
     "build": "tsc",
@@ -57,3 +57,4 @@
     "express": "^4.17.1"
   }
 }
+
