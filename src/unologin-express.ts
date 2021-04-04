@@ -178,6 +178,8 @@ export async function requireLogin(
   }
   else
   {
+    res.locals.unologin.msg = 'not logged in';
+    
     await authErrorHandler(req, res);
   }
 }
