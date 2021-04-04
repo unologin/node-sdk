@@ -37,7 +37,6 @@
     "@types/set-cookie-parser": "^2.4.0",
     "@types/superagent": "^4.1.10",
     "@unologin/eslint-config": "^1.0.1",
-    "@unologin/node-api": "file:./",
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
     "dotenv": "^8.2.0",
