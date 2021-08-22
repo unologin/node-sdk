@@ -69,7 +69,7 @@ export async function request<ReturnType = unknown>(
   body: object = {},
 ) : Promise<ReturnType>
 {
-  const response : superagent.Response = await superagent(
+  const response = await superagent(
     method,
     new URL(
       path.join('/api/apps/', loc),
@@ -82,14 +82,10 @@ export async function request<ReturnType = unknown>(
   ).send(body);
 
   let result;
-  let error;
 
   try
   {
-    const parsed = JSON.parse(response.text);
-
-    result = parsed.result;
-    error = parsed.error;
+    result = JSON.parse(response.text);
   }
   catch (e)
   {
@@ -97,16 +93,20 @@ export async function request<ReturnType = unknown>(
     throw new Error('Cannot parse API response: ' + response.text);
   }
 
-  if (error.code === 200)
+  if (
+    // check for 2xx status code
+    response.status >= 200 &&
+    response.status < 300
+  ) // successful response
   {
-    return result as ReturnType;
+    return result;
   }
-  else 
+  else // error response
   {
     throw new APIError(
-      error.code,
-      error.msg,
-      error.data,
+      response.status,
+      result.msg,
+      result.data,
     );
   }
 }

@@ -1,7 +1,6 @@
 
 import express from 'express';
 
-// eslint-disable-next-line new-cap
 const router = express.Router();
 
 export default router;
@@ -30,25 +29,16 @@ router.post('/api/apps/users/auth', (req, res) =>
   
   if (appLoginToken in tokens)
   {
-    res.send(
-      {
-        result: tokens[appLoginToken],
-        error: { code: 200 },
-      },
-    );
+    res.send(tokens[appLoginToken]);
   }
   else
   {
-    res.send(
+    res.status(401).send(
       {
-        error:
-        {
-          code: 401,
-          msg: 'invalid token',
-          data: { param: 'user' },
-        },
+        code: 401,
+        msg: 'invalid token',
+        data: { param: 'user' },
       },
     );
   }
-
 });
