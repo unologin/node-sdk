@@ -23,7 +23,7 @@ export function createToken(user : object)
 
 router.use(express.json());
 
-router.post('/api/apps/users/auth', (req, res) => 
+router.post('/users/auth', (req, res) => 
 {
   const { appLoginToken } = req.body.user;
   

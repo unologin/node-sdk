@@ -8,7 +8,6 @@ import { mock, supermock } from 'express-supermock';
 
 import supertest from 'supertest';
 
-import proxyquire from 'proxyquire';
 import { assert } from 'chai';
 import setCookieParser from 'set-cookie-parser';
 
@@ -16,26 +15,17 @@ import mockApi, { createToken } from './mock';
 
 import cookieParser from 'cookie-parser';
 
+import * as unologin from '../src/main';
 
-// @ts-ignore
-supermock['@global'] = true;
-
-mock('mock-api.unolog.in', { router: mockApi });
-
-const unologin = proxyquire('../src/main', { superagent: supermock });
-
-const { 
+import { 
   onAuthError,
   parseLogin,
   requireLogin,
   loginEventHandler, 
   logoutHandler,
-} = proxyquire(
-  '../src/unologin-express',
-  {
-    './main': unologin,
-  },
-);
+} from '../src/unologin-express';
+
+mock('mock-api.unolog.in', { router: mockApi });
 
 const app = express();
 
@@ -51,6 +41,7 @@ unologin.setup(
       apiUrl: 'https://mock-api.unolog.in',
       frontendUrl: 'https://mock-frontend.unolog.in',
     },
+    agent: supermock,
   },
 );
 

@@ -1,5 +1,5 @@
 
-import superagent from 'superagent';
+import superagent, { SuperAgentRequest } from 'superagent';
 
 import path from 'path';
 
@@ -11,14 +11,15 @@ export const express = expressMiddleware;
 export interface Realm 
 {
   apiUrl: string;
-  frontendUrl: string;
+  frontendUrl?: string;
 }
 
 export interface Setup 
 {
-  apiKey?: string;
+  apiKey: string;
   cookiesDomain?: string;
   realm: Realm;
+  agent: (method: string, location: string) => SuperAgentRequest,
 }
 
 export const realms = 
@@ -38,6 +39,8 @@ export const realms =
 let options : Setup =
 {
   realm: realms.live,
+  apiKey: '',
+  agent: superagent,
 };
 
 /**
@@ -69,10 +72,10 @@ export async function request<ReturnType = unknown>(
   body: object = {},
 ) : Promise<ReturnType>
 {
-  const response = await superagent(
+  const response = await options.agent(
     method,
     new URL(
-      path.join('/api/apps/', loc),
+      path.join(loc),
       options.realm.apiUrl,
     ).href,
   ).set(

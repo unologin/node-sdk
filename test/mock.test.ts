@@ -7,17 +7,16 @@ import mockApi, { createToken } from './mock';
 
 import { mock, supermock } from 'express-supermock';
 
-import proxyquire from 'proxyquire';
 import chai, { expect, assert } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
+
+import * as unologin from '../src/main';
 
 chai.use(chaiAsPromised);
 
 mock('api.unolog.in', { router: mockApi });
 
-const unologin = proxyquire('../src/main', { superagent: supermock });
-
-unologin.setup({ apiKey: 'abc123' });
+unologin.setup({ apiKey: 'abc123', agent: supermock });
 
 describe('verifyLoginToken', () => 
 {
