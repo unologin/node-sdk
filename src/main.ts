@@ -117,6 +117,7 @@ export async function request<ReturnType = unknown>(
 export interface User
 {
   asuId: string;
+  userClasses: string[];
 }
 
 /**
