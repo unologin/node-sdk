@@ -1,11 +1,13 @@
 
 import express from 'express';
 
+import jwt from 'jsonwebtoken';
+
 const router = express.Router();
 
 export default router;
 
-const tokens : { [token: string]: object } = {};
+const secret = '53cr37';
 
 /**
  * @param user user
@@ -13,12 +15,13 @@ const tokens : { [token: string]: object } = {};
  */
 export function createToken(user : object)
 {
-  // make sure all valid tokens start with 'valid-'
-  const token = 'valid-' + Math.random().toString(36).substring(7);
-
-  tokens[token] = user;
-
-  return token;
+  return jwt.sign(
+    {
+      ...user,
+      r: 60*60,
+    },
+    secret,
+  );
 }
 
 router.use(express.json());
@@ -27,11 +30,11 @@ router.post('/users/auth', (req, res) =>
 {
   const { appLoginToken } = req.body.user;
   
-  if (appLoginToken in tokens)
+  try 
   {
-    res.send(tokens[appLoginToken]);
+    res.send(jwt.verify(appLoginToken, secret));
   }
-  else
+  catch (e)
   {
     res.status(401).send(
       {
@@ -41,4 +44,38 @@ router.post('/users/auth', (req, res) =>
       },
     );
   }
+});
+
+router.post('/users/refresh', (req, res) => 
+{
+  const { appLoginToken } = req.body.user;
+  
+  try 
+  {
+    const user = jwt.verify(appLoginToken, secret);
+    res.send(
+      [
+        user,
+        {
+          value: jwt.sign(user, secret),
+          maxAge: 3000,
+        },
+      ],
+    );
+  }
+  catch (e)
+  {
+    res.status(401).send(
+      {
+        code: 401,
+        msg: 'invalid token',
+        data: { param: 'user' },
+      },
+    );
+  }
+});
+
+router.get('/public-keys/app-login-token', (req, res) => 
+{
+  res.send({ data: secret });
 });

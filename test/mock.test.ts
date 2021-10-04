@@ -44,8 +44,12 @@ describe('verifyLoginToken', () =>
       userClasses: ['users_default'],
     };
 
-    await expect(unologin.verifyLoginToken(createToken(user)))
-      .to.eventually.deep.equal(user);
+    const res = await unologin.verifyLoginToken(createToken(user));
+    
+    for (const [key, value] of Object.entries(user))
+    {
+      expect(res[key], key).to.be.deep.eq(value);
+    }
   });
 });
 

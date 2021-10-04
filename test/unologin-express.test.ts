@@ -8,7 +8,7 @@ import { mock, supermock } from 'express-supermock';
 
 import supertest from 'supertest';
 
-import { assert } from 'chai';
+import { assert, expect } from 'chai';
 import setCookieParser from 'set-cookie-parser';
 
 import mockApi, { createToken } from './mock';
@@ -110,7 +110,12 @@ describe('loginEventHandler', () =>
       .send()
       .expect(200);
 
-    assert.deepStrictEqual(JSON.parse(text).user, user);
+    const res = JSON.parse(text).user;
+
+    for (const [key, value] of Object.entries(user))
+    {
+      expect(res[key], key).to.be.deep.eq(value);
+    }
   });
 
   it('redirects to the unologin front end with success=false', async () => 
@@ -126,7 +131,7 @@ describe('loginEventHandler', () =>
 
     assert.strictEqual(url.hostname, 'mock-frontend.unolog.in');
     assert.strictEqual(url.searchParams.get('success'), 'false');
-    assert.strictEqual(url.searchParams.get('msg'), 'invalid token');
+    assert.strictEqual(url.searchParams.get('msg'), 'jwt malformed');
 
     assert.strictEqual(headers['set-cookie'], undefined);
   });
@@ -154,7 +159,6 @@ describe('parseLogin', () =>
       .set('Cookie', ['_uno_appLoginToken=invalid'])
       .send()
       .expect(401);
-
   });
 
   it('parses the login info if valid', async () => 

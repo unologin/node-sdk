@@ -1,5 +1,5 @@
 
-import { getOptions, verifyLoginToken } from './main';
+import { Cookie, getOptions, verifyTokenAndRefresh } from './main';
 
 import { Request, Response, NextFunction, CookieOptions } from 'express';
 
@@ -36,7 +36,8 @@ const cookies =
  */
 function completeCookieOptions(opts : CookieOptions) : CookieOptions
 {
-  return {
+  const cookie : CookieOptions =
+  {
     ...opts,
     domain: getOptions().cookiesDomain,
     // always use secure cookies if not in dev environment
@@ -46,6 +47,13 @@ function completeCookieOptions(opts : CookieOptions) : CookieOptions
     // [!] TODO: (UN-72) this is a temporary fix for the behavior of omitting sameSite on chrome
     sameSite: 'none',
   };
+
+  if (cookie.maxAge === undefined)
+  {
+    delete cookie.maxAge;
+  }
+
+  return cookie;
 }
 
 // not using "next" on auth errors because the request MUST be blocked
@@ -133,7 +141,15 @@ export async function parseLogin(
   {
     try
     {
-      res.locals.unologin.user = await verifyLoginToken(token);
+      const [user, cookie] = await verifyTokenAndRefresh(token);
+      
+      // cookie has been refreshed
+      if (cookie)
+      {
+        setCookies(res, cookie);
+      }
+
+      res.locals.unologin.user = user;
 
       next();
     }
@@ -142,7 +158,7 @@ export async function parseLogin(
       if (e.isAuthError?.())
       {
         res.locals.unologin.msg = e.message;
-
+        
         await authErrorHandler(req, res);
       }
       else
@@ -188,6 +204,40 @@ export async function requireLogin(
 }
 
 /**
+ * Sets login and login state cookies
+ * @param res res
+ * @param cookie cookie
+ * @returns void
+ */
+function setCookies(
+  res : Response,
+  cookie : Cookie,
+)
+{
+  res.cookie(
+    cookies.login.name,
+    cookie.value,
+    completeCookieOptions(
+      {
+        ...cookies.login.options,
+        maxAge: cookie.maxAge,
+      },
+    ),
+  );
+
+  res.cookie(
+    cookies.loginState.name,
+    'success',
+    completeCookieOptions(
+      {
+        ...cookies.loginState.options,
+        maxAge: cookie.maxAge,
+      },
+    ),
+  );
+}
+
+/**
  * Express middleware for handling the login process.
  * 
  * @param req express req
@@ -206,11 +256,12 @@ export async function loginEventHandler(
 
   // verify the login token
   let user;
+  let cookie;
   let msg;
 
   try
   {
-    user = await verifyLoginToken(token);
+    [user, cookie] = await verifyTokenAndRefresh(token);
   }
   catch (e)
   {
@@ -228,22 +279,8 @@ export async function loginEventHandler(
   // the token is valid
   if (user)
   {
-    // [!] TODO: expiration
-    res.cookie(
-      cookies.login.name,
-      token,
-      {
-        ...completeCookieOptions(cookies.login.options),
-      },
-    );
-
-    res.cookie(
-      cookies.loginState.name,
-      'success',
-      {
-        ...completeCookieOptions(cookies.loginState.options),
-      },
-    );
+    // [!] TODO: maxAge on initial cookie
+    setCookies(res, cookie || { value: token });
   }
 
   // construct a url for the unologin front end to consume the result
