@@ -16,7 +16,15 @@ chai.use(chaiAsPromised);
 
 mock('api.unolog.in', { router: mockApi });
 
-unologin.setup({ apiKey: 'abc123', agent: supermock });
+const appId = '6f521a08a74b3154aa112f9b';
+
+const token = Buffer.from(
+  JSON.stringify(
+    {payload: {data: {appId }}},
+  ),
+).toString('base64');
+
+unologin.setup({ apiKey: token, agent: supermock });
 
 describe('verifyLoginToken', () => 
 {
@@ -40,6 +48,7 @@ describe('verifyLoginToken', () =>
   {
     const user = 
     {
+      appId,
       asuId: '5ebac35e9bdf9a2ebbb8e92f',
       userClasses: ['users_default'],
     };

@@ -31,10 +31,18 @@ const app = express();
 
 const cookiesDomain = '.example.com';
 
+const appId = '6f521a08a74b3154aa112f9b';
+
+const token = Buffer.from(
+  JSON.stringify(
+    {payload: {data: {appId }}},
+  ),
+).toString('base64');
+
 // setup unologin
 unologin.setup(
   {
-    apiKey: 'abc123',
+    apiKey: token,
     cookiesDomain,
     realm: 
     {
@@ -65,6 +73,7 @@ describe('loginEventHandler', () =>
 {
   const user =
   {
+    appId,
     asuId: '5ebac35e9bdf9a2ebbb8e92f',
     userClasses: ['users_default'],
   };

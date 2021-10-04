@@ -21,6 +21,7 @@ export interface Setup
   apiKey: string;
   cookiesDomain?: string;
   realm: Realm;
+  appId?: string;
   agent: (method: string, location: string) => SuperAgentRequest,
 }
 
@@ -39,6 +40,7 @@ interface PublicKey
 
 export interface User
 {
+  appId: string;
   asuId: string;
   userClasses: string[];
   iat: number;
@@ -76,7 +78,23 @@ let options : Setup =
  */
 export function setup(opts: Partial<Setup>) : void
 {
-  options = { ...options, ...opts };
+  try 
+  {
+    const token = JSON.parse(
+      Buffer.from(opts.apiKey, 'base64').toString(),
+    );
+    
+    options =
+    {
+      ...options,
+      ...opts,
+      appId: token.payload.data.appId,
+    };
+  }
+  catch (e)
+  {
+    throw new Error('malformed API key');
+  }
 }
 
 /**
@@ -110,7 +128,7 @@ export async function request<ReturnType = unknown>(
   ).set(
     'X-API-Key', options.apiKey,
   ).send(body);
-
+  
   let result;
 
   try
@@ -173,6 +191,8 @@ export async function getLoginTokenKey() : Promise<PublicKey>
  * @param token login token
  * @param args optional additional body params
  * @returns user
+ * 
+ * @deprecated use verifyTokenAndRefresh instead
  */
 export async function verifyLoginToken(
   token: string,
@@ -199,23 +219,40 @@ export async function verifyLoginToken(
  * Verifies the login token locally and refreshes the token with the remote API if required.
  * 
  * @param token token
+ * @param forceRefresh forces a refresh if the token is valid
  * @returns [user, token]
  */
 export async function verifyTokenAndRefresh(
   token: string,
+  forceRefresh: boolean = false,
 ) : Promise<[User, Cookie]>
 {
   const key = await getLoginTokenKey();
-
+  
   try
   {
     const user = jwt.verify(token, key.data) as User;
-    
+
     if (
-      // user has a refresh-header
-      user.r &&
-      // user must be refreshed with the unologin API
-      user.r + user.iat < Date.now() / 1000
+      user.appId !== options.appId
+    )
+    {
+      throw new APIError(
+        401,
+        'token not for this appId',
+        { param: 'user', user },
+      );
+    }
+
+
+    if (
+      forceRefresh || 
+      (
+        // user has a refresh-header
+        user.r &&
+        // user must be refreshed with the unologin API
+        user.r + user.iat < Date.now() / 1000
+      )
     )
     {
       return await request<[User, Cookie]>(

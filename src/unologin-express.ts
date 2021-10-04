@@ -85,7 +85,7 @@ debug_useSecureCookies(b : boolean)
 
     if (!b)
     {
-      console.log(
+      console.warn(
         '\x1b[31m%s\x1b[0m',
         '[UNOLOGIN EXPRESS] SECURE COOKIES HAVE BEEN DISABLED.\n' +
         '                   DO THIS FOR LOCAL TESTING ONLY!',
@@ -94,7 +94,7 @@ debug_useSecureCookies(b : boolean)
   }
   else 
   {
-    console.log(
+    console.warn(
       '\x1b[31m%s\x1b[0m',
       '[UNOLOGIN EXPRESS] REFUSING debug_useSecureCookies call.\n' +
       '                   NODE_ENV != "development"!',
