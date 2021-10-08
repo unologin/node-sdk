@@ -165,7 +165,7 @@ export async function request<ReturnType = unknown>(
 export async function getLoginTokenKey() : Promise<PublicKey>
 {
   if (
-    loginTokenKey && 
+    loginTokenKey?.data && 
     (
       // key has no expiration
       !loginTokenKey.expiresIn ||
@@ -228,7 +228,7 @@ export async function verifyTokenAndRefresh(
 ) : Promise<[User, Cookie]>
 {
   const key = await getLoginTokenKey();
-  
+
   try
   {
     const user = jwt.verify(token, key.data) as User;
