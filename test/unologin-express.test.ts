@@ -11,6 +11,8 @@ import supertest from 'supertest';
 import { assert, expect } from 'chai';
 import setCookieParser from 'set-cookie-parser';
 
+import { createApiToken } from '../src/test-utils';
+
 import mockApi, { createToken } from './mock';
 
 import cookieParser from 'cookie-parser';
@@ -33,11 +35,7 @@ const cookiesDomain = '.example.com';
 
 const appId = '6f521a08a74b3154aa112f9b';
 
-const token = Buffer.from(
-  JSON.stringify(
-    {payload: {data: {appId }}},
-  ),
-).toString('base64');
+const token = createApiToken(appId);
 
 // setup unologin
 unologin.setup(
