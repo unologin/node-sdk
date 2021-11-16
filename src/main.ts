@@ -111,10 +111,13 @@ export function getOptions() : Setup
  * @param body request data
  * @returns response
  */
-export async function request<ReturnType = unknown>(
+export async function request<
+  ReturnType = unknown,
+  BodyType extends object = object,
+>(
   method: string,
   loc: string,
-  body: object = {},
+  body?: BodyType,
 ) : Promise<ReturnType>
 {
   const response = await options.agent(
@@ -127,19 +130,12 @@ export async function request<ReturnType = unknown>(
     'Content-Type', 'application/json',
   ).set(
     'X-API-Key', options.apiKey,
-  ).send(body);
-  
-  let result;
+  ).send(body || {});
 
-  try
-  {
-    result = JSON.parse(response.text);
-  }
-  catch (e)
-  {
-    // should only happen if the apiUrl is not configured properly
-    throw new Error('Cannot parse API response: ' + response.text);
-  }
+  const result = response.headers['content-type']
+    .startsWith('application/json') ?
+    JSON.parse(response.text) :
+    response.text;
 
   if (
     // check for 2xx status code
