@@ -120,17 +120,33 @@ export async function request<
   body?: BodyType,
 ) : Promise<ReturnType>
 {
-  const response = await options.agent(
-    method,
-    new URL(
-      path.join(loc),
-      options.realm.apiUrl,
-    ).href,
-  ).set(
-    'Content-Type', 'application/json',
-  ).set(
-    'X-API-Key', options.apiKey,
-  ).send(body || {});
+  let response;
+
+  try 
+  {
+    response = await options.agent(
+      method,
+      new URL(
+        path.join(loc),
+        options.realm.apiUrl,
+      ).href,
+    ).set(
+      'Content-Type', 'application/json',
+    ).set(
+      'X-API-Key', options.apiKey,
+    ).send(body || {});
+  }
+  catch (e : any)
+  {
+    if (e.response)
+    {
+      response = e.response;
+    }
+    else
+    {
+      throw e;
+    }
+  }
 
   const result = response.headers['content-type']
     .startsWith('application/json') ?
@@ -224,7 +240,7 @@ export async function verifyTokenAndRefresh(
 ) : Promise<[User, Cookie]>
 {
   const key = await getLoginTokenKey();
-
+  
   try
   {
     const user = jwt.verify(token, key.data) as User;

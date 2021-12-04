@@ -25,8 +25,8 @@ unologin.setup(
     cookiesDomain: process.env.UNOLOGIN_COOKIES_DOMAIN,
     realm: 
     {
-      apiUrl: 'http://local.unolog.in:1061',
-      frontendUrl: 'http://local.unolog.in:3000',
+      apiUrl: 'http://local.unolog.in:1063',
+      frontendUrl: 'http://local.unolog.in:8080',
     },
   },
 );
@@ -72,6 +72,12 @@ app.use('*', parseLogin);
 // IMPORTANT: this requires that parseLogin has been added to the app before
 app.use('/me/*', requireLogin);
 
+app.get('/me/print-user', (req, res) => 
+{
+  // after using parseLogin, the user will be stored in res.locals.unologin.user if logged in
+  res.send(res.locals.unologin.user);
+});
+
 // the logoutHandler will delete all login related cookies and then call next()
 // this means that you can call res.send() yourself
 app.post('/logout', logoutHandler, function(req, res)
@@ -79,7 +85,9 @@ app.post('/logout', logoutHandler, function(req, res)
   res.send('We hope to have you back soon!');
 });
 
-app.listen(8081, () => 
+const port = process.env.PORT || 8081;
+
+app.listen(port, () => 
 {
-  console.log('Example app listening...');
+  console.log('Example app listening on port ' + port);
 });
