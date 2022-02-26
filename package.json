@@ -8,6 +8,7 @@
     "example": "ts-node-dev ./example/main.ts",
     "test": "ts-mocha -b --paths -p ./tsconfig.json test/**/*.test.ts",
     "lint": "eslint --fix --ext .ts,.js ./src ./test ./example"
+    "install": "[ ! -d ./build ] && npm run build || true"
   },
   "repository": {
     "type": "git",
