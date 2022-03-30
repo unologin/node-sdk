@@ -7,6 +7,7 @@ import * as expressMiddleware from './unologin-express';
 import { APIError } from './errors';
 
 import jwt, { JsonWebTokenError } from 'jsonwebtoken';
+import { CookieOptions } from 'express';
 
 export const express = expressMiddleware;
 
@@ -22,7 +23,8 @@ export interface Setup
   cookiesDomain?: string;
   realm: Realm;
   appId?: string;
-  agent: (method: string, location: string) => SuperAgentRequest,
+  agent: (method: string, location: string) => SuperAgentRequest;
+  cookieSameSite?: CookieOptions['sameSite'];
 }
 
 export interface Cookie

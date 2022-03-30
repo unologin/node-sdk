@@ -44,8 +44,8 @@ function completeCookieOptions(opts : CookieOptions) : CookieOptions
     // this is redundant as debug_useSecureCookies will be ignored but it won't hurt
     secure: useSecureCookies || (process.env.NODE_ENV !== 'development'),
 
-    // [!] TODO: (UN-72) this is a temporary fix for the behavior of omitting sameSite on chrome
-    sameSite: 'none',
+    // [!] TODO: (UN-72) using 'none' is a temporary fix for the behavior of omitting sameSite on chrome
+    sameSite: getOptions().cookieSameSite || 'none',
   };
 
   if (cookie.maxAge === undefined)
