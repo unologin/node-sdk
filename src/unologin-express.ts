@@ -254,16 +254,21 @@ export async function loginEventHandler(
   // token provided by the user
   const token = (req.query.token || req.body.token) as string;
 
-  // verify the login token
-  let user;
-  let cookie;
-  let msg;
+  // error message in case an error occurs
+  let msg : string;
 
   try
   {
-    [user, cookie] = await verifyTokenAndRefresh(token);
+    // verify the login token
+    const [, cookie] = await verifyTokenAndRefresh(
+      token,
+      // force refresh token on login
+      true,
+    );
+
+    setCookies(res, cookie);
   }
-  catch (e)
+  catch (e : any)
   {
     if (e.isAuthError?.())
     {
@@ -276,16 +281,9 @@ export async function loginEventHandler(
     }
   }
 
-  // the token is valid
-  if (user)
-  {
-    // [!] TODO: maxAge on initial cookie
-    setCookies(res, cookie || { value: token });
-  }
-
   // construct a url for the unologin front end to consume the result
   const url = new URL(
-    '/login-response?success=' + !!user + '&msg=' + msg,
+    '/login-response?success=' + !msg + '&msg=' + msg,
     getOptions().realm.frontendUrl,
   );
 

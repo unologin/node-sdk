@@ -234,12 +234,13 @@ export async function verifyLoginToken(
  * 
  * @param token token
  * @param forceRefresh forces a refresh if the token is valid
- * @returns [user, token]
+ * @returns [user, cookie | null]
+ * @throws if token invalid
  */
 export async function verifyTokenAndRefresh(
   token: string,
   forceRefresh: boolean = false,
-) : Promise<[User, Cookie]>
+) : Promise<[User, Cookie | null]>
 {
   const key = await getLoginTokenKey();
   
@@ -258,13 +259,12 @@ export async function verifyTokenAndRefresh(
       );
     }
 
-
     if (
       forceRefresh || 
       (
-        // user has a refresh-header
+        // cookie has a refresh-header
         user.r &&
-        // user must be refreshed with the unologin API
+        // cookie must be refreshed via the unologin API
         user.r + user.iat < Date.now() / 1000
       )
     )
@@ -282,7 +282,7 @@ export async function verifyTokenAndRefresh(
     }
     else 
     {
-      return [user, undefined];
+      return [user, null];
     }
   }
   catch (e)
