@@ -7,8 +7,7 @@
     "build": "tsc",
     "example": "ts-node-dev ./example/main.ts",
     "test": "jest",
-    "lint": "eslint --fix --ext .ts,.js ./src ./test ./example",
-    "install": "[ ! -d ./build ] && npm run build || true"
+    "lint": "eslint --fix --ext .ts,.js ./src ./test ./example"
   },
   "repository": {
     "type": "git",
@@ -42,6 +41,7 @@
     "dotenv": "^8.2.0",
     "eslint": "^7.22.0",
     "express-supermock": "^1.0.1",
+    "husky": "^7.0.4",
     "jest": "^28.0.3",
     "set-cookie-parser": "^2.4.8",
     "supertest": "^6.1.3",
