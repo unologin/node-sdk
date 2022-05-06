@@ -1,5 +1,4 @@
 
-import { expect } from 'chai';
 import { decodeApiKey } from '../src/main';
 
 // eslint-disable-next-line max-len
@@ -14,13 +13,13 @@ describe('decodeApiKey', () =>
   {
     expect(
       decodeApiKey(keyLegacy).appId,
-    ).to.eq('legacyAppId');
+    ).toBe('legacyAppId');
   });
 
   it('decodes jwt API keys', () => 
   {
     expect(
       decodeApiKey(keyJwt).appId,
-    ).to.eq('jwtAppId');
+    ).toBe('jwtAppId');
   });
 });

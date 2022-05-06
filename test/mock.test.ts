@@ -7,12 +7,8 @@ import mockApi, { createToken } from './mock';
 
 import { mock, supermock } from 'express-supermock';
 
-import chai, { expect, assert } from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-
 import * as unologin from '../src/main';
-
-chai.use(chaiAsPromised);
+import { APIError } from '../src/errors';
 
 mock('api.unolog.in', { router: mockApi });
 
@@ -30,18 +26,16 @@ describe('verifyLoginToken', () =>
 {
   it('returns an error for missing tokens', async () =>   
   {
+    // TODO: check isAuthError
     await expect(unologin.verifyLoginToken(undefined))
-      .to.eventually.rejected.then(
-        (e) => assert(e.isAuthError?.()),
-      );
+      .rejects.toBeInstanceOf(APIError);
   });
 
   it('returns an error for invalid tokens', async () =>   
   {
+    // TODO: check isAuthError
     await expect(unologin.verifyLoginToken('invalid'))
-      .to.eventually.rejected.then(
-        (e) => assert(e.isAuthError?.()),
-      );
+      .rejects.toBeInstanceOf(APIError);
   });
 
   it('returns user info for valid tokens', async () =>   
@@ -57,11 +51,8 @@ describe('verifyLoginToken', () =>
     
     for (const [key, value] of Object.entries(user))
     {
-      expect(res[key], key).to.be.deep.eq(value);
+      expect(res[key], key).toStrictEqual(value);
     }
   });
 });
 
-describe('setup', () =>
-{
-});

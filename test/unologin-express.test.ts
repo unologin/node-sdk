@@ -8,7 +8,6 @@ import { mock, supermock } from 'express-supermock';
 
 import supertest from 'supertest';
 
-import { assert, expect } from 'chai';
 import setCookieParser from 'set-cookie-parser';
 
 import { createApiToken } from '../src/test-utils';
@@ -89,23 +88,23 @@ describe('loginEventHandler', () =>
 
     const url = new URL(text.replace('Found. Redirecting to ', ''));
 
-    assert.strictEqual(url.hostname, 'mock-frontend.unolog.in');
-    assert.strictEqual(url.searchParams.get('success'), 'true');
+    expect(url.hostname).toBe('mock-frontend.unolog.in');
+    expect(url.searchParams.get('success')).toBe('true');
 
     const loginCookie = setCookieParser.parseString(headers['set-cookie'][0]);
     const statusCookie = setCookieParser.parseString(headers['set-cookie'][1]);
 
-    assert.strictEqual(loginCookie.name, '_uno_appLoginToken');
-    assert.strictEqual(loginCookie.httpOnly, true);
-    assert.strictEqual(loginCookie.secure, true);
-    assert.strictEqual(loginCookie.value, token);
-    assert.strictEqual(loginCookie.domain, cookiesDomain);
+    expect(loginCookie.name).toBe('_uno_appLoginToken');
+    expect(loginCookie.httpOnly).toBe(true);
+    expect(loginCookie.secure).toBe(true);
+    expect(loginCookie.value).toBe(token);
+    expect(loginCookie.domain).toBe(cookiesDomain);
 
-    assert.strictEqual(statusCookie.name, '_uno_loginState');
-    assert(!statusCookie.httpOnly);
-    assert.strictEqual(statusCookie.secure, true);
-    assert.strictEqual(statusCookie.value, 'success');
-    assert.strictEqual(statusCookie.domain, cookiesDomain);
+    expect(statusCookie.name).toBe('_uno_loginState');
+    expect(!statusCookie.httpOnly).toBeTruthy();
+    expect(statusCookie.secure).toBe(true);
+    expect(statusCookie.value).toBe('success');
+    expect(statusCookie.domain).toBe(cookiesDomain);
 
     cookies = headers['set-cookie'];
   });
@@ -121,7 +120,7 @@ describe('loginEventHandler', () =>
 
     for (const [key, value] of Object.entries(user))
     {
-      expect(res[key], key).to.be.deep.eq(value);
+      expect(res[key], key).toStrictEqual(value);
     }
   });
 
@@ -136,11 +135,11 @@ describe('loginEventHandler', () =>
 
     const url = new URL(text.replace('Found. Redirecting to ', ''));
 
-    assert.strictEqual(url.hostname, 'mock-frontend.unolog.in');
-    assert.strictEqual(url.searchParams.get('success'), 'false');
-    assert.strictEqual(url.searchParams.get('msg'), 'jwt malformed');
+    expect(url.hostname).toBe('mock-frontend.unolog.in');
+    expect(url.searchParams.get('success')).toBe('false');
+    expect(url.searchParams.get('msg')).toBe('jwt malformed');
 
-    assert.strictEqual(headers['set-cookie'], undefined);
+    expect(headers['set-cookie']).toBe(undefined);
   });
 
 });
@@ -156,7 +155,7 @@ describe('parseLogin', () =>
 
     const { user } = JSON.parse(res.text);
 
-    assert.strictEqual(user, undefined);
+    expect(user).toBe(undefined);
 
   });
 
@@ -177,7 +176,7 @@ describe('parseLogin', () =>
 
     const { user } = JSON.parse(res.text);
 
-    assert.strictEqual(user, undefined);
+    expect(user).toBe(undefined);
 
   });
 
@@ -215,14 +214,15 @@ describe('logoutHandler', () =>
     const loginCookie = setCookieParser.parseString(headers['set-cookie'][0]);
     const statusCookie = setCookieParser.parseString(headers['set-cookie'][1]);
 
-    assert(
+    expect(
       statusCookie.expires <= new Date(),
       'status cookie has not expired ' + headers['set-cookie'][1],
-    );
-    assert(
+    ).toBeTruthy();
+
+    expect(
       loginCookie.expires <= new Date(),
       'login cookie has not expired ' + headers['set-cookie'][1],
-    );
+    ).toBeTruthy();
   });
 
   it('expires all cookies when used as middleware', async () => 
@@ -234,14 +234,16 @@ describe('logoutHandler', () =>
     const loginCookie = setCookieParser.parseString(headers['set-cookie'][0]);
     const statusCookie = setCookieParser.parseString(headers['set-cookie'][1]);
 
-    assert(
+    expect(
       statusCookie.expires <= new Date(),
       'status cookie has not expired ' + headers['set-cookie'][1],
-    );
-    assert(
+    ).toBe(true);
+
+    expect(
       loginCookie.expires <= new Date(),
       'login cookie has not expired ' + headers['set-cookie'][1],
-    );
+    ).toBe(true);
+
   });
 });
 
