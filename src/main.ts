@@ -50,6 +50,11 @@ export interface User
   r?: number;
 }
 
+interface ApiKeyPayload
+{
+  appId: string;
+}
+
 // public key for verifying login tokens
 let loginTokenKey : PublicKey | null = null;
 
@@ -75,6 +80,34 @@ let options : Setup =
 };
 
 /**
+ * @param key api key
+ * @returns decoded key (payload)
+ */
+export function decodeApiKey(key : string | undefined) : ApiKeyPayload
+{
+  if (!key)
+  {
+    throw new Error('unologin api key is undefined.');
+  }
+
+  // check what type of token is used: legacy base64 token will not contain any dots, while jwts will  
+  const payload = key.includes('.') ?
+    jwt.decode(key, { json: true }) :
+    // legacy base64 signed token
+    JSON.parse(
+      Buffer.from(key, 'base64').toString(),
+    ).payload?.data
+  ;
+
+  if (!payload?.appId)
+  {
+    throw new Error('Invalid unologin API key.');
+  }
+
+  return payload;
+}
+
+/**
  * @param opts setup
  * @returns void
  */
@@ -82,15 +115,13 @@ export function setup(opts: Partial<Setup>) : void
 {
   try 
   {
-    const token = JSON.parse(
-      Buffer.from(opts.apiKey, 'base64').toString(),
-    );
+    const token = decodeApiKey(opts.apiKey);
     
     options =
     {
       ...options,
       ...opts,
-      appId: token.payload.data.appId,
+      appId: token.appId,
     };
   }
   catch (e)
