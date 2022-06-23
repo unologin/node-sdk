@@ -63,12 +63,7 @@ export const realms =
   live: 
   {
     apiUrl: 'https://api.unolog.in',
-    frontendUrl: 'https://unolog.in',
-  },
-  dev: 
-  {
-    apiUrl: 'https://api-dev.unolog.in',
-    frontendUrl: 'https://dev.unolog.in',
+    frontendUrl: 'https://login.unolog.in',
   },
 };
 

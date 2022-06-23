@@ -23,11 +23,6 @@ unologin.setup(
     apiKey: process.env.UNOLOGIN_API_KEY,
     // domain(s) on which to set cookies
     cookiesDomain: process.env.UNOLOGIN_COOKIES_DOMAIN,
-    realm: 
-    {
-      apiUrl: 'http://local.unolog.in:1063',
-      frontendUrl: 'http://local.unolog.in:8080',
-    },
   },
 );
 

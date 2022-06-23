@@ -38,10 +38,6 @@ export declare const realms: {
         apiUrl: string;
         frontendUrl: string;
     };
-    dev: {
-        apiUrl: string;
-        frontendUrl: string;
-    };
 };
 /**
  * @param key api key

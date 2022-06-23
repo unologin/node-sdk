@@ -40,12 +40,16 @@ unologin.setup(
 
 ## Usage with [express.js](https://expressjs.com/)
 
-We built some handlers for you to set up unolog·in on your server with only a few lines of code. 
+We have built some handlers for you to set up unolog·in on your server with only a few lines of code. 
 
 A full working example can be seen in the ```./example``` directory. Run using
 
 ```
 npm run example
+```
+
+```
+yarn run example
 ```
 
 ## Express setup
@@ -62,12 +66,28 @@ app.use(cookieParser());
 
 ## Testing locally
 
-When working on your local server, you likely don't connect through ```https```. To be able to still use login cookies, disable the use of secure cookies. The library will refuse to perform this action if ```process.env.NODE_ENV``` is anything but ```'development'```.
+When working on your local server, you likely won't connect through ```https``` but ```http```. To be able to still use login cookies, disable the use of secure cookies. The library will refuse to perform this action if ```process.env.NODE_ENV``` is anything but ```'development'```.
 
 ```javascript
 // IMPORTANT: only do this when testing on your local server!
 unologin.express.debug_useSecureCookies(false);
 ```
+
+### Important note on ```localhost```
+
+In order to make the cookies behave correctly, it is recommended that you use a subdomain of ```localhost``` to access your front- and backend implementations. Most browsers will be able to resolve arbitrary subdomains of ```localhost```.
+
+**Cookies may be rejected by your browser otherwise!**
+
+For example: 
+
+```
+Server: my-app.localhost:8080
+Frontend: my-app.localhost:8081
+# then in your .env
+UNOLOGIN_COOKIES_DOMAIN=my-app.localhost
+```
+
 
 ## Handling the login event
 
