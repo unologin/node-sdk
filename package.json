@@ -4,6 +4,7 @@
   "description": "unologin node api including express handlers",
   "main": "build/main.js",
   "files": ["build/"],
+  "private": false,
   "scripts": {
     "build": "tsc",
     "example": "ts-node-dev ./example/main.ts",
