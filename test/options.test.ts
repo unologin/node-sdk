@@ -1,6 +1,8 @@
 
 import { decodeApiKey } from '../src/main';
 
+// don't worry, the keys are not actually valid ;) 
+
 // eslint-disable-next-line max-len
 const keyLegacy = 'eyAicGF5bG9hZCI6IHsgImRhdGEiOiB7ICJhcHBJZCI6ICJsZWdhY3lBcHBJZCIgfSB9IH0=';
 

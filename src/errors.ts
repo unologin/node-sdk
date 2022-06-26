@@ -24,6 +24,6 @@ export class APIError extends Error
    */
   isAuthError() : boolean
   {
-    return !!(this.code === 401 && this.data.param === 'user');
+    return !!(this.code === 401 && this.data?.param === 'user');
   }
 }

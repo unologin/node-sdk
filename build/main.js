@@ -46,7 +46,7 @@ exports.express = expressMiddleware;
 let loginTokenKey = null;
 exports.realms = {
     live: {
-        apiUrl: 'https://api.unolog.in',
+        apiUrl: 'https://v1.unolog.in',
         frontendUrl: 'https://login.unolog.in',
     },
 };
@@ -135,6 +135,23 @@ function request(method, loc, body) {
 }
 exports.request = request;
 /**
+ *
+ * @param key key
+ * @returns key if valid
+ * @throws error otherwise
+ */
+function checkLoginTokenKey(key) {
+    if (options.skipPublicKeyCheck ||
+        (typeof (key) === 'object' &&
+            typeof (key['data']) === 'string' &&
+            key['data'].startsWith('-----BEGIN PUBLIC KEY-----\n'))) {
+        return key;
+    }
+    else {
+        throw new Error('Invalid public key returned by API: ' + JSON.stringify(key));
+    }
+}
+/**
  * @returns public key for login token verification
  */
 function getLoginTokenKey() {
@@ -148,7 +165,7 @@ function getLoginTokenKey() {
             return loginTokenKey;
         }
         else {
-            return (loginTokenKey = yield request('GET', '/public-keys/app-login-token'));
+            return (loginTokenKey = checkLoginTokenKey(yield request('GET', '/public-keys/app-login-token')));
         }
     });
 }
@@ -164,10 +181,9 @@ exports.getLoginTokenKey = getLoginTokenKey;
  */
 function verifyLoginToken(token, args = {}) {
     return __awaiter(this, void 0, void 0, function* () {
-        const user = yield request('POST', '/users/auth', Object.assign({ user: {
+        return request('POST', '/users/auth', Object.assign({ user: {
                 appLoginToken: token,
             } }, args));
-        return user;
     });
 }
 exports.verifyLoginToken = verifyLoginToken;

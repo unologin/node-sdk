@@ -47,6 +47,7 @@ unologin.setup(
       frontendUrl: 'https://mock-frontend.unolog.in',
     },
     agent: supermock,
+    skipPublicKeyCheck: true,
   },
 );
 

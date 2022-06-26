@@ -13,6 +13,7 @@ export interface Setup {
     appId?: string;
     agent: (method: string, location: string) => SuperAgentRequest;
     cookieSameSite?: CookieOptions['sameSite'];
+    skipPublicKeyCheck?: boolean;
 }
 export interface Cookie {
     value: string;

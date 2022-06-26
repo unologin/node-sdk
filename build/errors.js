@@ -21,7 +21,8 @@ class APIError extends Error {
      * @returns true if the error was caused by missing/invalid credentials
      */
     isAuthError() {
-        return !!(this.code === 401 && this.data.param === 'user');
+        var _a;
+        return !!(this.code === 401 && ((_a = this.data) === null || _a === void 0 ? void 0 : _a.param) === 'user');
     }
 }
 exports.APIError = APIError;

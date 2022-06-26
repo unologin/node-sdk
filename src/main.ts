@@ -25,6 +25,7 @@ export interface Setup
   appId?: string;
   agent: (method: string, location: string) => SuperAgentRequest;
   cookieSameSite?: CookieOptions['sameSite'];
+  skipPublicKeyCheck?: boolean;
 }
 
 export interface Cookie
@@ -62,7 +63,7 @@ export const realms =
 {
   live: 
   {
-    apiUrl: 'https://api.unolog.in',
+    apiUrl: 'https://v1.unolog.in',
     frontendUrl: 'https://login.unolog.in',
   },
 };
@@ -200,6 +201,33 @@ export async function request<
 }
 
 /**
+ * 
+ * @param key key
+ * @returns key if valid
+ * @throws error otherwise
+ */
+function checkLoginTokenKey(key : unknown) : PublicKey
+{
+  if (
+    options.skipPublicKeyCheck ||
+    (
+      typeof(key) === 'object' &&
+      typeof(key['data']) === 'string' &&
+      key['data'].startsWith('-----BEGIN PUBLIC KEY-----\n')
+    )
+  )
+  {
+    return key as PublicKey;
+  }
+  else 
+  {
+    throw new Error(
+      'Invalid public key returned by API: ' + JSON.stringify(key),
+    );
+  }
+}
+
+/**
  * @returns public key for login token verification
  */
 export async function getLoginTokenKey() : Promise<PublicKey>
@@ -218,9 +246,11 @@ export async function getLoginTokenKey() : Promise<PublicKey>
   }
   else
   {
-    return (loginTokenKey = await request(
-      'GET',
-      '/public-keys/app-login-token',
+    return (loginTokenKey = checkLoginTokenKey(
+      await request(
+        'GET',
+        '/public-keys/app-login-token',
+      ),
     ));
   }
 }
@@ -240,7 +270,7 @@ export async function verifyLoginToken(
 ) 
 : Promise<User>
 {
-  const user = await request<User>(
+  return request<User>(
     'POST',
     '/users/auth',
     {
@@ -251,8 +281,6 @@ export async function verifyLoginToken(
       ...args,
     },
   );
-
-  return user;
 }
 
 /**
@@ -269,7 +297,7 @@ export async function verifyTokenAndRefresh(
 ) : Promise<[User, Cookie | null]>
 {
   const key = await getLoginTokenKey();
-  
+
   try
   {
     const user = jwt.verify(token, key.data) as User;

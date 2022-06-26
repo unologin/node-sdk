@@ -10,7 +10,7 @@ import { mock, supermock } from 'express-supermock';
 import * as unologin from '../src/main';
 import { APIError } from '../src/errors';
 
-mock('api.unolog.in', { router: mockApi });
+mock('v1.unolog.in', { router: mockApi });
 
 const appId = '6f521a08a74b3154aa112f9b';
 
@@ -20,7 +20,7 @@ const token = Buffer.from(
   ),
 ).toString('base64');
 
-unologin.setup({ apiKey: token, agent: supermock });
+unologin.setup({ apiKey: token, agent: supermock, skipPublicKeyCheck: true });
 
 describe('verifyLoginToken', () => 
 {
