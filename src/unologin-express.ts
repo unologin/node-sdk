@@ -283,9 +283,14 @@ export async function loginEventHandler(
 
   // construct a url for the unologin front end to consume the result
   const url = new URL(
-    '/login-response?success=' + !msg + '&msg=' + msg,
+    decodeURIComponent(req.query.origin as string) || 
     getOptions().realm.frontendUrl,
   );
+
+  url.searchParams.set('loginHandlerSuccess', msg ? 'false' : 'true');
+  url.searchParams.set('loginHandlerMsg', msg);
+  url.searchParams.set('appId', getOptions().appId);
+  url.searchParams.set('client', 'Web');
 
   res.redirect(url.href);
 

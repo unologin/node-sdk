@@ -192,7 +192,12 @@ function loginEventHandler(req, res, next) {
             }
         }
         // construct a url for the unologin front end to consume the result
-        const url = new URL('/login-response?success=' + !msg + '&msg=' + msg, (0, main_1.getOptions)().realm.frontendUrl);
+        const url = new URL(decodeURIComponent(req.query.origin) ||
+            (0, main_1.getOptions)().realm.frontendUrl);
+        url.searchParams.set('loginHandlerSuccess', msg ? 'false' : 'true');
+        url.searchParams.set('loginHandlerMsg', msg);
+        url.searchParams.set('appId', (0, main_1.getOptions)().appId);
+        url.searchParams.set('client', 'Web');
         res.redirect(url.href);
         res.send();
     });

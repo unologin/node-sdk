@@ -1,8 +1,6 @@
 
 import superagent, { SuperAgentRequest } from 'superagent';
 
-import path from 'path';
-
 import * as expressMiddleware from './unologin-express';
 import { APIError } from './errors';
 
@@ -156,7 +154,7 @@ export async function request<
     response = await options.agent(
       method,
       new URL(
-        path.join(loc),
+        loc,
         options.realm.apiUrl,
       ).href,
     ).set(

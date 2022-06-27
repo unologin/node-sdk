@@ -82,15 +82,20 @@ describe('loginEventHandler', () =>
   {
     const token = createToken(user);
 
+    const origin = 'https://mock-frontend.unolog.in';
+
     const { text, headers } = await supertest(app)
-      .post(`/unologin/login?token=${token}`)
+      .post(
+        `/unologin/login?token=${token}&origin=${encodeURIComponent(origin)}`,
+      )
+      .set('Origin', origin)
       // expect a redirect
       .expect(302);
 
     const url = new URL(text.replace('Found. Redirecting to ', ''));
 
     expect(url.hostname).toBe('mock-frontend.unolog.in');
-    expect(url.searchParams.get('success')).toBe('true');
+    expect(url.searchParams.get('loginHandlerSuccess')).toBe('true');
 
     const loginCookie = setCookieParser.parseString(headers['set-cookie'][0]);
     const statusCookie = setCookieParser.parseString(headers['set-cookie'][1]);
@@ -129,16 +134,20 @@ describe('loginEventHandler', () =>
   {
     const token = 'invalid';
 
+    const origin = 'https://mock-frontend.unolog.in';
+
     const { text, headers } = await supertest(app)
-      .post(`/unologin/login?token=${token}`)
+      .post(
+        `/unologin/login?token=${token}&origin=${encodeURIComponent(origin)}`
+      )
       // expect a redirect
       .expect(302);
 
     const url = new URL(text.replace('Found. Redirecting to ', ''));
 
     expect(url.hostname).toBe('mock-frontend.unolog.in');
-    expect(url.searchParams.get('success')).toBe('false');
-    expect(url.searchParams.get('msg')).toBe('jwt malformed');
+    expect(url.searchParams.get('loginHandlerSuccess')).toBe('false');
+    expect(url.searchParams.get('loginHandlerMsg')).toBe('jwt malformed');
 
     expect(headers['set-cookie']).toBe(undefined);
   });

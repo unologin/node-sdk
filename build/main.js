@@ -37,7 +37,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.verifyTokenAndRefresh = exports.verifyLoginToken = exports.getLoginTokenKey = exports.request = exports.getOptions = exports.setup = exports.decodeApiKey = exports.realms = exports.express = void 0;
 const superagent_1 = __importDefault(require("superagent"));
-const path_1 = __importDefault(require("path"));
 const expressMiddleware = __importStar(require("./unologin-express"));
 const errors_1 = require("./errors");
 const jsonwebtoken_1 = __importStar(require("jsonwebtoken"));
@@ -106,7 +105,7 @@ function request(method, loc, body) {
     return __awaiter(this, void 0, void 0, function* () {
         let response;
         try {
-            response = yield options.agent(method, new URL(path_1.default.join(loc), options.realm.apiUrl).href).set('Content-Type', 'application/json').set('X-API-Key', options.apiKey).send(body || {});
+            response = yield options.agent(method, new URL(loc, options.realm.apiUrl).href).set('Content-Type', 'application/json').set('X-API-Key', options.apiKey).send(body || {});
         }
         catch (e) {
             if (e.response) {
