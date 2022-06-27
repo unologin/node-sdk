@@ -138,7 +138,7 @@ describe('loginEventHandler', () =>
 
     const { text, headers } = await supertest(app)
       .post(
-        `/unologin/login?token=${token}&origin=${encodeURIComponent(origin)}`
+        `/unologin/login?token=${token}&origin=${encodeURIComponent(origin)}`,
       )
       // expect a redirect
       .expect(302);
