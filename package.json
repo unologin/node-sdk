@@ -55,7 +55,7 @@
   },
   "dependencies": {
     "jsonwebtoken": "^8.5.1",
-    "superagent": "^7.1.2"
+    "superagent": "6"
   },
   "peerDependencies": {
     "cookie-parser": "^1.4.5",
