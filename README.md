@@ -91,10 +91,10 @@ UNOLOGIN_COOKIES_DOMAIN=my-app.localhost
 
 ## Handling the login event
 
-After going through the login/registration steps, your users will be redirected to your login handler. Be sure to register your login handler in the developer dashboard. To handle the login event, add the ```loginHanlder``` middleware.
+After going through the login/registration steps, your users will be redirected to your login handler. Be sure to register your login handler in the developer dashboard. To handle the login event, add the ```loginEventHandler``` middleware.
 
 ```javascript
-app.use('/unologin/login', loginEventHandler);
+app.use('/unologin/login', unologin.express.loginEventHandler);
 ```
 
 ## Logout
@@ -102,11 +102,15 @@ app.use('/unologin/login', loginEventHandler);
 To log out the user, use the ```logoutHandler``` middleware. Note that the middleware won't emit a response. It is up to you to do that.
 
 ```javascript
-app.post('/logout', logoutHandler, function(req, res)
-{
-  // send a response to terminate the request
-  res.send('We hope to have you back soon!');
-});
+app.post(
+  '/logout', 
+  unologin.express.logoutHandler, 
+  function(req, res)
+  {
+    // send a response to terminate the request
+    res.send('We hope to have you back soon!');
+  }
+);
 ```
 
 Alternatively, call ```logoutHandler``` as a function:
@@ -114,7 +118,7 @@ Alternatively, call ```logoutHandler``` as a function:
 app.post('/logout', function(req, res)
 {
   // same effect as above
-  logoutHandler(req, res);
+  unologin.express.logoutHandler(req, res);
 
   // send a response to terminate the request
   res.send('We hope to have you back soon!');
@@ -129,7 +133,7 @@ Use the ```parseLogin``` middleware to parse the login token sent by the user an
 
 ```javascript
 // parsing login token everywhere 
-app.use('*', parseLogin);
+app.use('*', unologin.express.parseLogin);
 
 // example of accessing the user data
 app.get('/me', function(req, res) => 
@@ -144,10 +148,10 @@ Use the ```requireLogin``` middleware where it is absolutely required for users 
 **IMPORTANT:** ```requireLogin``` **must** be preceeded by ```parseLogin```!
 
 ```javascript
-app.use('/my-personal-photos', parseLogin);
+app.use('/my-personal-photos', unologin.express.parseLogin);
 
 // require your users to be logged in to access this route
-app.use('/my-personal-photos', requireLogin);
+app.use('/my-personal-photos', unologin.express.requireLogin);
 ```
 
 
@@ -162,7 +166,7 @@ The below implementation is actually the default behavior. If you are fine with 
 ```javascript
 onAuthError(function(req, res)
 {
-  logoutHandler(req, res);
+  unologin.express.logoutHandler(req, res);
   res.status(401);
   res.send(
       'Auth error: ' + res.locals.unologin?.msg ||
