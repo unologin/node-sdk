@@ -1,5 +1,7 @@
 Node.js library for interfacing with [unolog·in](https://unolog.in). Includes [express](https://expressjs.com/)-handlers.
 
+The full documentation for this package can be found [here](https://unologin.github.io/node-api/).
+
 Visit [our documentation page](https://dashboard.unolog.in/docs) for more docs & guides.
 
 # Installation
