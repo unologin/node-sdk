@@ -11,10 +11,10 @@ class APIError extends Error {
      * @param message msg
      * @param data data
      */
-    constructor(code, message, data) {
-        super(message);
+    constructor(code, msg, data) {
+        super(`${code}: ${msg}\n\ndata: ${JSON.stringify(data, null, 2)}`);
         this.code = code;
-        this.message = message;
+        this.msg = msg;
         this.data = data;
     }
     /**

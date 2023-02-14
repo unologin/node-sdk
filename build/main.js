@@ -49,11 +49,11 @@ exports.realms = {
         frontendUrl: 'https://login.unolog.in',
     },
 };
-let options = {
+const defaultOptions = {
     realm: exports.realms.live,
-    apiKey: '',
     agent: superagent_1.default,
 };
+let options = null;
 /**
  * @param key api key
  * @returns decoded key (payload)
@@ -61,7 +61,7 @@ let options = {
 function decodeApiKey(key) {
     var _a;
     if (!key) {
-        throw new Error('unologin api key is undefined.');
+        throw new Error('Invalid unolog.in API key: ' + key);
     }
     // check what type of token is used: legacy base64 token will not contain any dots, while jwts will  
     const payload = key.includes('.') ?
@@ -69,7 +69,7 @@ function decodeApiKey(key) {
         // legacy base64 signed token
         (_a = JSON.parse(Buffer.from(key, 'base64').toString()).payload) === null || _a === void 0 ? void 0 : _a.data;
     if (!(payload === null || payload === void 0 ? void 0 : payload.appId)) {
-        throw new Error('Invalid unologin API key.');
+        throw new Error('Invalid unologin API key. Payload: ' + JSON.stringify(payload, null, 2));
     }
     return payload;
 }
@@ -81,7 +81,8 @@ exports.decodeApiKey = decodeApiKey;
 function setup(opts) {
     try {
         const token = decodeApiKey(opts.apiKey);
-        options = Object.assign(Object.assign(Object.assign({}, options), opts), { appId: token.appId });
+        const currentOptions = options || defaultOptions;
+        options = Object.assign(Object.assign(Object.assign({}, currentOptions), opts), { appId: token.appId });
     }
     catch (e) {
         throw new Error('malformed API key');
@@ -92,7 +93,12 @@ exports.setup = setup;
  * @returns setup
  */
 function getOptions() {
-    return options;
+    if (options) {
+        return options;
+    }
+    else {
+        throw new Error('unologin: library not set up.');
+    }
 }
 exports.getOptions = getOptions;
 /**
@@ -104,10 +110,14 @@ exports.getOptions = getOptions;
 function request(method, loc, body) {
     return __awaiter(this, void 0, void 0, function* () {
         let response;
+        const url = new URL(loc, getOptions().realm.apiUrl).href;
         try {
-            response = yield options.agent(method, new URL(loc, options.realm.apiUrl).href).set('Content-Type', 'application/json').set('X-API-Key', options.apiKey).send(body || {});
+            response = yield getOptions().agent(method, url)
+                .set('Content-Type', 'application/json').set('X-API-Key', getOptions().apiKey).send(body || {});
         }
         catch (e) {
+            // some agents may throw on non-2XX status codes
+            // this will generally include the response with the error
             if (e.response) {
                 response = e.response;
             }
@@ -128,7 +138,15 @@ function request(method, loc, body) {
         }
         else // error response
          {
-            throw new errors_1.APIError(response.status, result.msg, result.data);
+            if (result &&
+                typeof (result) === 'object' &&
+                'code' in result &&
+                'msg' in result) {
+                throw new errors_1.APIError(response.status, result.msg, result.data);
+            }
+            else {
+                throw result;
+            }
         }
     });
 }
@@ -140,7 +158,7 @@ exports.request = request;
  * @throws error otherwise
  */
 function checkLoginTokenKey(key) {
-    if (options.skipPublicKeyCheck ||
+    if (getOptions().skipPublicKeyCheck ||
         (typeof (key) === 'object' &&
             typeof (key['data']) === 'string' &&
             key['data'].startsWith('-----BEGIN PUBLIC KEY-----\n'))) {
@@ -187,7 +205,7 @@ function verifyLoginToken(token, args = {}) {
 }
 exports.verifyLoginToken = verifyLoginToken;
 /**
- * Verifies the login token locally and refreshes the token with the remote API if required.
+ * Verifies the login token locally and refreshes the token if required.
  *
  * @param token token
  * @param forceRefresh forces a refresh if the token is valid
@@ -199,7 +217,7 @@ function verifyTokenAndRefresh(token, forceRefresh = false) {
         const key = yield getLoginTokenKey();
         try {
             const user = jsonwebtoken_1.default.verify(token, key.data);
-            if (user.appId !== options.appId) {
+            if (user.appId !== getOptions().appId) {
                 throw new errors_1.APIError(401, 'token not for this appId', { param: 'user', user });
             }
             if (forceRefresh ||
@@ -230,3 +248,4 @@ function verifyTokenAndRefresh(token, forceRefresh = false) {
     });
 }
 exports.verifyTokenAndRefresh = verifyTokenAndRefresh;
+exports.default = module.exports;

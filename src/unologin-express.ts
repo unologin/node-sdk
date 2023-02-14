@@ -1,7 +1,18 @@
 
-import { Cookie, getOptions, verifyTokenAndRefresh } from './main';
+import {
+  Cookie,
+  getOptions,
+  verifyTokenAndRefresh,
+} from './main';
 
-import { Request, Response, NextFunction, CookieOptions } from 'express';
+import {
+  Request,
+  Response,
+  CookieOptions,
+  Handler,
+  NextFunction,
+} from 'express';
+import { APIError } from './errors';
 
 // should cookies use the "secure" attribute?
 let useSecureCookies = true;
@@ -119,19 +130,13 @@ export function onAuthError(
  * Adds "user"-key to res.locals.unologin Requires a cookie parser.
  * Does nothing if no login cookie is present.
  * 
- * @param req express request
- * @param res express result
- * @param next express next
- * 
- * @returns void
+ * @param req req 
+ * @param res res
+ * @param next next
+ * @returns Promise<void>
  */
-export async function parseLogin(
-  req : Request,
-  res : Response,
-  next : NextFunction,
-) : Promise<void>
+export const parseLogin : Handler = async (req, res, next) =>
 {
-
   const token = req.cookies?._uno_appLoginToken;
 
   res.locals.unologin ||= {};
@@ -155,7 +160,9 @@ export async function parseLogin(
     }
     catch (e)
     {
-      if (e.isAuthError?.())
+      if (
+        e instanceof APIError && e.isAuthError?.()
+      )
       {
         res.locals.unologin.msg = e.message;
         
@@ -172,22 +179,18 @@ export async function parseLogin(
   {
     next();
   }
-}
+};
 
 /**
  * Only executes next() if the user is logged in.
  * Requires parseLogin middleware
  * 
- * @param req express req
- * @param res express res
- * @param next express next
- * @returns void
+ * @param req req 
+ * @param res res
+ * @param next next
+ * @returns Promise<void>
  */
-export async function requireLogin(
-  req : Request,
-  res : Response,
-  next : NextFunction,
-)
+export const requireLogin : Handler = async (req, res, next) => 
 {
   const { user } = res.locals.unologin;
 
@@ -201,7 +204,7 @@ export async function requireLogin(
     
     await authErrorHandler(req, res);
   }
-}
+};
 
 /**
  * Sets login and login state cookies
@@ -240,22 +243,18 @@ function setCookies(
 /**
  * Express middleware for handling the login process.
  * 
- * @param req express req
- * @param res express res
- * @param next express next
- * @returns void
+ * @param req req 
+ * @param res res
+ * @param next next
+ * @returns Promise<void>
  */
-export async function loginEventHandler(
-  req : Request,
-  res : Response,
-  next : NextFunction,
-)
+export const loginEventHandler : Handler = async (req, res, next) => 
 {
   // token provided by the user
   const token = (req.query.token || req.body.token) as string;
 
   // error message in case an error occurs
-  let msg : string;
+  let msg : string | null = null;
 
   try
   {
@@ -266,13 +265,16 @@ export async function loginEventHandler(
       true,
     );
 
-    setCookies(res, cookie);
+    cookie && setCookies(res, cookie);
   }
-  catch (e : any)
+  catch (e)
   {
-    if (e.isAuthError?.())
+    if (
+      e instanceof APIError &&
+      e.isAuthError?.()
+    )
     {
-      msg = e.message;
+      msg = e.msg;
     }
     else
     {
@@ -288,28 +290,28 @@ export async function loginEventHandler(
   );
 
   url.searchParams.set('loginHandlerSuccess', msg ? 'false' : 'true');
-  url.searchParams.set('loginHandlerMsg', msg);
+  msg && url.searchParams.set('loginHandlerMsg', msg);
   url.searchParams.set('appId', getOptions().appId);
   url.searchParams.set('client', 'Web');
 
   res.redirect(url.href);
 
   res.send();
-}
+};
 
 /**
  * Logs out a user and calls next()
  * 
- * @param req express 
- * @param res express
- * @param next express
- * @returns void
+ * @param _ req 
+ * @param res res
+ * @param next next
+ * @returns Promise<void>
  */
-export function logoutHandler(
-  req : Request,
-  res : Response,
+export const logoutHandler = async (
+  _ : Request, 
+  res : Response, 
   next?: NextFunction,
-)
+) => 
 {
   // reset all cookies
   for (const cookie of Object.values(cookies))
@@ -329,4 +331,4 @@ export function logoutHandler(
   }
 
   next?.();
-}
+};

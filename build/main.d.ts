@@ -1,16 +1,19 @@
-import { SuperAgentRequest } from 'superagent';
+import superagent, { SuperAgentRequest } from 'superagent';
 import * as expressMiddleware from './unologin-express';
-import { CookieOptions } from 'express';
+import type { CookieOptions } from 'express';
+import type { UserToken } from './types';
 export declare const express: typeof expressMiddleware;
+/** @deprecated alias for types/UserToken */
+export type User = UserToken;
 export interface Realm {
     apiUrl: string;
-    frontendUrl?: string;
+    frontendUrl: string;
 }
-export interface Setup {
+export interface Options {
     apiKey: string;
     cookiesDomain?: string;
     realm: Realm;
-    appId?: string;
+    appId: string;
     agent: (method: string, location: string) => SuperAgentRequest;
     cookieSameSite?: CookieOptions['sameSite'];
     skipPublicKeyCheck?: boolean;
@@ -24,13 +27,6 @@ interface PublicKey {
     createdAt: number;
     expiresIn: number;
 }
-export interface User {
-    appId: string;
-    asuId: string;
-    userClasses: string[];
-    iat: number;
-    r?: number;
-}
 interface ApiKeyPayload {
     appId: string;
 }
@@ -39,6 +35,13 @@ export declare const realms: {
         apiUrl: string;
         frontendUrl: string;
     };
+};
+declare const defaultOptions: {
+    realm: {
+        apiUrl: string;
+        frontendUrl: string;
+    };
+    agent: superagent.SuperAgentStatic;
 };
 /**
  * @param key api key
@@ -49,11 +52,11 @@ export declare function decodeApiKey(key: string | undefined): ApiKeyPayload;
  * @param opts setup
  * @returns void
  */
-export declare function setup(opts: Partial<Setup>): void;
+export declare function setup(opts: Omit<Options, keyof typeof defaultOptions | 'appId'> & Partial<Options>): void;
 /**
  * @returns setup
  */
-export declare function getOptions(): Setup;
+export declare function getOptions(): Options;
 /**
  * @param method http method
  * @param loc url relative to api url
@@ -74,14 +77,15 @@ export declare function getLoginTokenKey(): Promise<PublicKey>;
  *
  * @deprecated use verifyTokenAndRefresh instead
  */
-export declare function verifyLoginToken(token: string, args?: object): Promise<User>;
+export declare function verifyLoginToken(token: string, args?: object): Promise<UserToken>;
 /**
- * Verifies the login token locally and refreshes the token with the remote API if required.
+ * Verifies the login token locally and refreshes the token if required.
  *
  * @param token token
  * @param forceRefresh forces a refresh if the token is valid
  * @returns [user, cookie | null]
  * @throws if token invalid
  */
-export declare function verifyTokenAndRefresh(token: string, forceRefresh?: boolean): Promise<[User, Cookie | null]>;
-export {};
+export declare function verifyTokenAndRefresh(token: string, forceRefresh?: boolean): Promise<[UserToken, Cookie | null]>;
+declare const _default: typeof import("./main.js");
+export default _default;

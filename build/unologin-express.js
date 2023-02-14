@@ -11,6 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.logoutHandler = exports.loginEventHandler = exports.requireLogin = exports.parseLogin = exports.onAuthError = exports.debug_useSecureCookies = void 0;
 const main_1 = require("./main");
+const errors_1 = require("./errors");
 // should cookies use the "secure" attribute?
 let useSecureCookies = true;
 // default cookie options
@@ -49,7 +50,7 @@ function completeCookieOptions(opts) {
 }
 let authErrorHandler = (req, res) => {
     var _a;
-    logoutHandler(req, res);
+    (0, exports.logoutHandler)(req, res);
     res.status(401);
     res.send('Auth error: ' + ((_a = res.locals.unologin) === null || _a === void 0 ? void 0 : _a.msg) || 'unknown error');
 };
@@ -88,67 +89,62 @@ exports.onAuthError = onAuthError;
  * Adds "user"-key to res.locals.unologin Requires a cookie parser.
  * Does nothing if no login cookie is present.
  *
- * @param req express request
- * @param res express result
- * @param next express next
- *
- * @returns void
+ * @param req req
+ * @param res res
+ * @param next next
+ * @returns Promise<void>
  */
-function parseLogin(req, res, next) {
+const parseLogin = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     var _c;
-    return __awaiter(this, void 0, void 0, function* () {
-        const token = (_a = req.cookies) === null || _a === void 0 ? void 0 : _a._uno_appLoginToken;
-        (_c = res.locals).unologin || (_c.unologin = {});
-        // only try to parse the token if the user provides one
-        if (token) {
-            try {
-                const [user, cookie] = yield (0, main_1.verifyTokenAndRefresh)(token);
-                // cookie has been refreshed
-                if (cookie) {
-                    setCookies(res, cookie);
-                }
-                res.locals.unologin.user = user;
-                next();
+    const token = (_a = req.cookies) === null || _a === void 0 ? void 0 : _a._uno_appLoginToken;
+    (_c = res.locals).unologin || (_c.unologin = {});
+    // only try to parse the token if the user provides one
+    if (token) {
+        try {
+            const [user, cookie] = yield (0, main_1.verifyTokenAndRefresh)(token);
+            // cookie has been refreshed
+            if (cookie) {
+                setCookies(res, cookie);
             }
-            catch (e) {
-                if ((_b = e.isAuthError) === null || _b === void 0 ? void 0 : _b.call(e)) {
-                    res.locals.unologin.msg = e.message;
-                    yield authErrorHandler(req, res);
-                }
-                else {
-                    // pass the error to the express error handler
-                    next(e);
-                }
-            }
-        }
-        else {
+            res.locals.unologin.user = user;
             next();
         }
-    });
-}
+        catch (e) {
+            if (e instanceof errors_1.APIError && ((_b = e.isAuthError) === null || _b === void 0 ? void 0 : _b.call(e))) {
+                res.locals.unologin.msg = e.message;
+                yield authErrorHandler(req, res);
+            }
+            else {
+                // pass the error to the express error handler
+                next(e);
+            }
+        }
+    }
+    else {
+        next();
+    }
+});
 exports.parseLogin = parseLogin;
 /**
  * Only executes next() if the user is logged in.
  * Requires parseLogin middleware
  *
- * @param req express req
- * @param res express res
- * @param next express next
- * @returns void
+ * @param req req
+ * @param res res
+ * @param next next
+ * @returns Promise<void>
  */
-function requireLogin(req, res, next) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const { user } = res.locals.unologin;
-        if (user) {
-            next();
-        }
-        else {
-            res.locals.unologin.msg = 'not logged in';
-            yield authErrorHandler(req, res);
-        }
-    });
-}
+const requireLogin = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { user } = res.locals.unologin;
+    if (user) {
+        next();
+    }
+    else {
+        res.locals.unologin.msg = 'not logged in';
+        yield authErrorHandler(req, res);
+    }
+});
 exports.requireLogin = requireLogin;
 /**
  * Sets login and login state cookies
@@ -163,55 +159,54 @@ function setCookies(res, cookie) {
 /**
  * Express middleware for handling the login process.
  *
- * @param req express req
- * @param res express res
- * @param next express next
- * @returns void
+ * @param req req
+ * @param res res
+ * @param next next
+ * @returns Promise<void>
  */
-function loginEventHandler(req, res, next) {
-    var _a;
-    return __awaiter(this, void 0, void 0, function* () {
-        // token provided by the user
-        const token = (req.query.token || req.body.token);
-        // error message in case an error occurs
-        let msg;
-        try {
-            // verify the login token
-            const [, cookie] = yield (0, main_1.verifyTokenAndRefresh)(token, 
-            // force refresh token on login
-            true);
-            setCookies(res, cookie);
+const loginEventHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _d;
+    // token provided by the user
+    const token = (req.query.token || req.body.token);
+    // error message in case an error occurs
+    let msg = null;
+    try {
+        // verify the login token
+        const [, cookie] = yield (0, main_1.verifyTokenAndRefresh)(token, 
+        // force refresh token on login
+        true);
+        cookie && setCookies(res, cookie);
+    }
+    catch (e) {
+        if (e instanceof errors_1.APIError &&
+            ((_d = e.isAuthError) === null || _d === void 0 ? void 0 : _d.call(e))) {
+            msg = e.msg;
         }
-        catch (e) {
-            if ((_a = e.isAuthError) === null || _a === void 0 ? void 0 : _a.call(e)) {
-                msg = e.message;
-            }
-            else {
-                next(e);
-                return;
-            }
+        else {
+            next(e);
+            return;
         }
-        // construct a url for the unologin front end to consume the result
-        const url = new URL(decodeURIComponent(req.query.origin) ||
-            (0, main_1.getOptions)().realm.frontendUrl);
-        url.searchParams.set('loginHandlerSuccess', msg ? 'false' : 'true');
-        url.searchParams.set('loginHandlerMsg', msg);
-        url.searchParams.set('appId', (0, main_1.getOptions)().appId);
-        url.searchParams.set('client', 'Web');
-        res.redirect(url.href);
-        res.send();
-    });
-}
+    }
+    // construct a url for the unologin front end to consume the result
+    const url = new URL(decodeURIComponent(req.query.origin) ||
+        (0, main_1.getOptions)().realm.frontendUrl);
+    url.searchParams.set('loginHandlerSuccess', msg ? 'false' : 'true');
+    msg && url.searchParams.set('loginHandlerMsg', msg);
+    url.searchParams.set('appId', (0, main_1.getOptions)().appId);
+    url.searchParams.set('client', 'Web');
+    res.redirect(url.href);
+    res.send();
+});
 exports.loginEventHandler = loginEventHandler;
 /**
  * Logs out a user and calls next()
  *
- * @param req express
- * @param res express
- * @param next express
- * @returns void
+ * @param _ req
+ * @param res res
+ * @param next next
+ * @returns Promise<void>
  */
-function logoutHandler(req, res, next) {
+const logoutHandler = (_, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     // reset all cookies
     for (const cookie of Object.values(cookies)) {
         // reset the cookie by immediately expiring it
@@ -222,5 +217,5 @@ function logoutHandler(req, res, next) {
             maxAge: 1 }));
     }
     next === null || next === void 0 ? void 0 : next();
-}
+});
 exports.logoutHandler = logoutHandler;

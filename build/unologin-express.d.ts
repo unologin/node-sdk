@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-declare type AuthErrorHandler = (req: Request, res: Response) => unknown | Promise<unknown>;
+import { Request, Response, Handler, NextFunction } from 'express';
+type AuthErrorHandler = (req: Request, res: Response) => unknown | Promise<unknown>;
 /**
  * [FOR LOCAL TESTING ONLY] allows to enable/disable secure cookies.
  * @param b useSecureCookies
@@ -17,39 +17,38 @@ export declare function onAuthError(handler: AuthErrorHandler): void;
  * Adds "user"-key to res.locals.unologin Requires a cookie parser.
  * Does nothing if no login cookie is present.
  *
- * @param req express request
- * @param res express result
- * @param next express next
- *
- * @returns void
+ * @param req req
+ * @param res res
+ * @param next next
+ * @returns Promise<void>
  */
-export declare function parseLogin(req: Request, res: Response, next: NextFunction): Promise<void>;
+export declare const parseLogin: Handler;
 /**
  * Only executes next() if the user is logged in.
  * Requires parseLogin middleware
  *
- * @param req express req
- * @param res express res
- * @param next express next
- * @returns void
+ * @param req req
+ * @param res res
+ * @param next next
+ * @returns Promise<void>
  */
-export declare function requireLogin(req: Request, res: Response, next: NextFunction): Promise<void>;
+export declare const requireLogin: Handler;
 /**
  * Express middleware for handling the login process.
  *
- * @param req express req
- * @param res express res
- * @param next express next
- * @returns void
+ * @param req req
+ * @param res res
+ * @param next next
+ * @returns Promise<void>
  */
-export declare function loginEventHandler(req: Request, res: Response, next: NextFunction): Promise<void>;
+export declare const loginEventHandler: Handler;
 /**
  * Logs out a user and calls next()
  *
- * @param req express
- * @param res express
- * @param next express
- * @returns void
+ * @param _ req
+ * @param res res
+ * @param next next
+ * @returns Promise<void>
  */
-export declare function logoutHandler(req: Request, res: Response, next?: NextFunction): void;
+export declare const logoutHandler: (_: Request, res: Response, next?: NextFunction) => Promise<void>;
 export {};

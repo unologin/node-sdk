@@ -12,11 +12,13 @@ export class APIError extends Error
    */
   constructor(
     public code : number,
-    public message: string,
+    public msg: string,
     public data: any,
   ) 
   {
-    super(message);
+    super(
+      `${code}: ${msg}\n\ndata: ${JSON.stringify(data, null, 2)}`, 
+    );
   }
 
   /**

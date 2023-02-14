@@ -76,7 +76,7 @@ describe('loginEventHandler', () =>
     userClasses: ['users_default'],
   };
 
-  let cookies = [];
+  let cookies : any[] = [];
 
   it('redirects to the unologin front end with success=true', async () => 
   {
@@ -225,12 +225,12 @@ describe('logoutHandler', () =>
     const statusCookie = setCookieParser.parseString(headers['set-cookie'][1]);
 
     expect(
-      statusCookie.expires <= new Date(),
+      statusCookie.expires as Date <= new Date(),
       'status cookie has not expired ' + headers['set-cookie'][1],
     ).toBeTruthy();
 
     expect(
-      loginCookie.expires <= new Date(),
+      loginCookie.expires as Date <= new Date(),
       'login cookie has not expired ' + headers['set-cookie'][1],
     ).toBeTruthy();
   });
@@ -245,12 +245,12 @@ describe('logoutHandler', () =>
     const statusCookie = setCookieParser.parseString(headers['set-cookie'][1]);
 
     expect(
-      statusCookie.expires <= new Date(),
+      statusCookie.expires as Date <= new Date(),
       'status cookie has not expired ' + headers['set-cookie'][1],
     ).toBe(true);
 
     expect(
-      loginCookie.expires <= new Date(),
+      loginCookie.expires as Date <= new Date(),
       'login cookie has not expired ' + headers['set-cookie'][1],
     ).toBe(true);
 

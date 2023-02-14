@@ -1,26 +1,44 @@
 
-import superagent, { SuperAgentRequest } from 'superagent';
+import superagent, {
+  SuperAgentRequest,
+} from 'superagent';
 
-import * as expressMiddleware from './unologin-express';
-import { APIError } from './errors';
+import * as expressMiddleware 
+  from './unologin-express';
 
-import jwt, { JsonWebTokenError } from 'jsonwebtoken';
-import { CookieOptions } from 'express';
+import {
+  APIError,
+} from './errors';
+
+import jwt, {
+  JsonWebTokenError,
+} from 'jsonwebtoken';
+
+import type {
+  CookieOptions,
+} from 'express';
+
+import type {
+  UserToken,
+} from './types';
 
 export const express = expressMiddleware;
+
+/** @deprecated alias for types/UserToken */
+export type User = UserToken;
 
 export interface Realm 
 {
   apiUrl: string;
-  frontendUrl?: string;
+  frontendUrl: string;
 }
 
-export interface Setup 
+export interface Options 
 {
   apiKey: string;
   cookiesDomain?: string;
   realm: Realm;
-  appId?: string;
+  appId: string;
   agent: (method: string, location: string) => SuperAgentRequest;
   cookieSameSite?: CookieOptions['sameSite'];
   skipPublicKeyCheck?: boolean;
@@ -37,16 +55,6 @@ interface PublicKey
   data: string;
   createdAt: number;
   expiresIn: number;
-}
-
-export interface User
-{
-  appId: string;
-  asuId: string;
-  userClasses: string[];
-  iat: number;
-  // refresh-at timestamp
-  r?: number;
 }
 
 interface ApiKeyPayload
@@ -66,12 +74,13 @@ export const realms =
   },
 };
 
-let options : Setup =
+const defaultOptions =
 {
   realm: realms.live,
-  apiKey: '',
   agent: superagent,
 };
+
+let options : Options | null = null;
 
 /**
  * @param key api key
@@ -81,7 +90,7 @@ export function decodeApiKey(key : string | undefined) : ApiKeyPayload
 {
   if (!key)
   {
-    throw new Error('unologin api key is undefined.');
+    throw new Error('Invalid unolog.in API key: ' + key);
   }
 
   // check what type of token is used: legacy base64 token will not contain any dots, while jwts will  
@@ -95,7 +104,9 @@ export function decodeApiKey(key : string | undefined) : ApiKeyPayload
 
   if (!payload?.appId)
   {
-    throw new Error('Invalid unologin API key.');
+    throw new Error(
+      'Invalid unologin API key. Payload: ' + JSON.stringify(payload, null, 2),
+    );
   }
 
   return payload;
@@ -105,15 +116,21 @@ export function decodeApiKey(key : string | undefined) : ApiKeyPayload
  * @param opts setup
  * @returns void
  */
-export function setup(opts: Partial<Setup>) : void
+export function setup(
+  opts : Omit<
+    Options, keyof typeof defaultOptions | 'appId'
+  > & Partial<Options>,
+) : void
 {
   try 
   {
     const token = decodeApiKey(opts.apiKey);
     
+    const currentOptions = options || defaultOptions;
+
     options =
     {
-      ...options,
+      ...currentOptions,
       ...opts,
       appId: token.appId,
     };
@@ -127,9 +144,16 @@ export function setup(opts: Partial<Setup>) : void
 /**
  * @returns setup
  */
-export function getOptions() : Setup
+export function getOptions() : Options
 {
-  return options;
+  if (options)
+  {
+    return options;
+  }
+  else 
+  {
+    throw new Error('unologin: library not set up.');
+  }
 }
 
 /**
@@ -147,24 +171,26 @@ export async function request<
   body?: BodyType,
 ) : Promise<ReturnType>
 {
-  let response;
+  let response : superagent.Response;
+
+  const url = new URL(
+    loc,
+    getOptions().realm.apiUrl,
+  ).href;
 
   try 
   {
-    response = await options.agent(
-      method,
-      new URL(
-        loc,
-        options.realm.apiUrl,
-      ).href,
-    ).set(
-      'Content-Type', 'application/json',
-    ).set(
-      'X-API-Key', options.apiKey,
-    ).send(body || {});
+    response = await getOptions().agent(method, url)
+      .set(
+        'Content-Type', 'application/json',
+      ).set(
+        'X-API-Key', getOptions().apiKey,
+      ).send(body || {});
   }
   catch (e : any)
   {
+    // some agents may throw on non-2XX status codes
+    // this will generally include the response with the error
     if (e.response)
     {
       response = e.response;
@@ -177,7 +203,7 @@ export async function request<
 
   const result = response.headers['content-type']
     .startsWith('application/json') ?
-    JSON.parse(response.text) :
+    JSON.parse(response.text) as unknown :
     response.text;
 
   if (
@@ -186,15 +212,27 @@ export async function request<
     response.status < 300
   ) // successful response
   {
-    return result;
+    return result as ReturnType;
   }
   else // error response
   {
-    throw new APIError(
-      response.status,
-      result.msg,
-      result.data,
-    );
+    if (
+      result &&
+      typeof(result) === 'object' &&
+      'code' in result && 
+      'msg' in result
+    )
+    {
+      throw new APIError(
+        response.status,
+        (result as any).msg,
+        (result as any).data,
+      );
+    }
+    else 
+    {
+      throw result;
+    }
   }
 }
 
@@ -207,11 +245,11 @@ export async function request<
 function checkLoginTokenKey(key : unknown) : PublicKey
 {
   if (
-    options.skipPublicKeyCheck ||
+    getOptions().skipPublicKeyCheck ||
     (
       typeof(key) === 'object' &&
-      typeof(key['data']) === 'string' &&
-      key['data'].startsWith('-----BEGIN PUBLIC KEY-----\n')
+      typeof((key as any)['data']) === 'string' &&
+      (key as any)['data'].startsWith('-----BEGIN PUBLIC KEY-----\n')
     )
   )
   {
@@ -265,10 +303,9 @@ export async function getLoginTokenKey() : Promise<PublicKey>
 export async function verifyLoginToken(
   token: string,
   args: object = {},
-) 
-: Promise<User>
+) : Promise<UserToken>
 {
-  return request<User>(
+  return request<UserToken>(
     'POST',
     '/users/auth',
     {
@@ -282,7 +319,7 @@ export async function verifyLoginToken(
 }
 
 /**
- * Verifies the login token locally and refreshes the token with the remote API if required.
+ * Verifies the login token locally and refreshes the token if required.
  * 
  * @param token token
  * @param forceRefresh forces a refresh if the token is valid
@@ -292,16 +329,16 @@ export async function verifyLoginToken(
 export async function verifyTokenAndRefresh(
   token: string,
   forceRefresh: boolean = false,
-) : Promise<[User, Cookie | null]>
+) : Promise<[UserToken, Cookie | null]>
 {
   const key = await getLoginTokenKey();
 
   try
   {
-    const user = jwt.verify(token, key.data) as User;
+    const user = jwt.verify(token, key.data) as UserToken;
 
     if (
-      user.appId !== options.appId
+      user.appId !== getOptions().appId
     )
     {
       throw new APIError(
@@ -321,7 +358,7 @@ export async function verifyTokenAndRefresh(
       )
     )
     {
-      return await request<[User, Cookie]>(
+      return await request<[UserToken, Cookie]>(
         'POST',
         '/users/refresh',
         {
@@ -350,3 +387,5 @@ export async function verifyTokenAndRefresh(
     }
   }
 }
+
+export default module.exports as typeof import('./main.js'); 

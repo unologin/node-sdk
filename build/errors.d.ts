@@ -3,7 +3,7 @@
  */
 export declare class APIError extends Error {
     code: number;
-    message: string;
+    msg: string;
     data: any;
     /**
      *
@@ -11,7 +11,7 @@ export declare class APIError extends Error {
      * @param message msg
      * @param data data
      */
-    constructor(code: number, message: string, data: any);
+    constructor(code: number, msg: string, data: any);
     /**
      * @returns true if the error was caused by missing/invalid credentials
      */

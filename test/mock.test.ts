@@ -20,14 +20,21 @@ const token = Buffer.from(
   ),
 ).toString('base64');
 
-unologin.setup({ apiKey: token, agent: supermock, skipPublicKeyCheck: true });
+unologin.setup(
+  { 
+    apiKey: token,
+    cookiesDomain: '.example.com',
+    agent: supermock,
+    skipPublicKeyCheck: true,
+  },
+);
 
 describe('verifyLoginToken', () => 
 {
   it('returns an error for missing tokens', async () =>   
-  {
+  { 
     // TODO: check isAuthError
-    await expect(unologin.verifyLoginToken(undefined))
+    await expect(unologin.verifyLoginToken(undefined as unknown as string))
       .rejects.toBeInstanceOf(APIError);
   });
 
@@ -51,7 +58,7 @@ describe('verifyLoginToken', () =>
     
     for (const [key, value] of Object.entries(user))
     {
-      expect(res[key], key).toStrictEqual(value);
+      expect((res as any)[key], key).toStrictEqual(value);
     }
   });
 });
