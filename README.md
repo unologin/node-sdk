@@ -1,9 +1,8 @@
-
-# @unologin/node-api
-
 Node.js library for interfacing with [unolog·in](https://unolog.in). Includes [express](https://expressjs.com/)-handlers.
 
-## Installation
+Visit [our documentation page](https://dashboard.unolog.in/docs) for more docs & guides.
+
+# Installation
 
 ```
 npm install @unologin/node-api
@@ -15,13 +14,13 @@ or
 yarn add @unologin/node-api
 ```
 
-## Typescript
+# Typescript
 
 The package includes built-in type declarations. There is no need to install any additional packages.
 
 The below examples will use plain javascript for generality.
 
-## Setup
+# Setup
 
 Before using the library, make sure to set up your credentials.
 
@@ -38,7 +37,7 @@ unologin.setup(
 );
 ```
 
-## REST API
+# REST API
 
 The library includes bindings for the [unolog·in REST API](https://dashboard.unolog.in/docs/http-api) through the exported ```rest``` object.
 
@@ -59,7 +58,7 @@ const user = unologin.rest.getUser(userToken);
 
 ```
 
-### Querying users
+## Querying users
 
 You can query you app's users using [this query schema](https://v1.unolog.in/schemas/apps/:appId/users/query). Omitting the query will return a cursor for all users.
 
@@ -89,7 +88,7 @@ cursor.forEach((user) => console.log(user))
 cursor.toArray()
 ```
 
-## Usage with [express.js](https://expressjs.com/)
+# Usage with [express.js](https://expressjs.com/)
 
 We have built some handlers for you to set up unolog·in on your server with only a few lines of code. 
 
@@ -103,7 +102,7 @@ npm run example
 yarn run example
 ```
 
-## Express setup
+# Express setup
 
 The next steps are going to assume that you have an express application or router to attach the provided handlers to.
 
@@ -115,7 +114,7 @@ const cookieParser = require('cookie-parser');
 app.use(cookieParser());
 ```
 
-## Testing locally
+# Testing locally
 
 When working on your local server, you likely won't connect through ```https``` but ```http```. To be able to still use login cookies, disable the use of secure cookies. The library will refuse to perform this action if ```process.env.NODE_ENV``` is anything but ```'development'```.
 
@@ -124,7 +123,7 @@ When working on your local server, you likely won't connect through ```https``` 
 unologin.express.debug_useSecureCookies(false);
 ```
 
-### Important note on ```localhost```
+## Important note on ```localhost```
 
 In order to make the cookies behave correctly, it is recommended that you use a subdomain of ```localhost``` to access your front- and backend implementations. Most browsers will be able to resolve arbitrary subdomains of ```localhost```.
 
@@ -140,7 +139,7 @@ UNOLOGIN_COOKIES_DOMAIN=my-app.localhost
 ```
 
 
-## Handling the login event
+# Handling the login event
 
 After going through the login/registration steps, your users will be redirected to your login handler. Be sure to register your login handler in the developer dashboard. To handle the login event, add the ```loginEventHandler``` middleware.
 
@@ -148,7 +147,7 @@ After going through the login/registration steps, your users will be redirected 
 app.use('/unologin/login', unologin.express.loginEventHandler);
 ```
 
-## Logout
+# Logout
 
 To log out the user, use the ```logoutHandler``` middleware. Note that the middleware won't emit a response. It is up to you to do that.
 
@@ -176,7 +175,7 @@ app.post('/logout', function(req, res)
 });
 ```
 
-## Using ```parseLogin``` and ```requireLogin```
+# Using ```parseLogin``` and ```requireLogin```
 
 Use the ```parseLogin``` middleware to parse the login token sent by the user and validate it. 
 
@@ -206,7 +205,7 @@ app.use('/my-personal-photos', unologin.express.requireLogin);
 ```
 
 
-## Error handling (optional)
+# Error handling (optional)
 
 Decide what happens when an authentication error is thrown. This happens if
 

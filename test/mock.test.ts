@@ -3,30 +3,44 @@
  * Tests for the mock api implementation
  */
 
-import mockApi, { createToken } from './mock';
+import mockApi, {
+  createToken,
+} from './mock';
 
-import { mock, supermock } from 'express-supermock';
+import {
+  mock,
+  supermock,
+} from 'express-supermock';
 
 import * as unologin from '../src/main';
-import { APIError } from '../src/errors';
+
+import {
+  APIError,
+} from '../src/errors';
+
+import {
+  createApiToken,
+} from '../src/test-utils';
 
 mock('v1.unolog.in', { router: mockApi });
 
 const appId = '6f521a08a74b3154aa112f9b';
 
-const token = Buffer.from(
-  JSON.stringify(
-    {payload: {data: {appId }}},
-  ),
-).toString('base64');
+const token = createApiToken(appId);
 
 unologin.setup(
   { 
     apiKey: token,
     cookiesDomain: '.example.com',
     agent: supermock,
-    skipPublicKeyCheck: true,
   },
+);
+
+jest.spyOn(
+  unologin.keyManager,
+  'checkLoginTokenKey',
+).mockImplementation(
+  (key) => key as any,
 );
 
 describe('verifyLoginToken', () => 

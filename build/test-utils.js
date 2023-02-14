@@ -1,4 +1,10 @@
 "use strict";
+/**
+ *
+ * Utility functions for mocking and local testing.
+ *
+ * @module test-utils
+ */
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };

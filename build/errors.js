@@ -1,4 +1,9 @@
 "use strict";
+/**
+ * Structures for handling errors raised by the unolog·in API.
+ *
+ * @module errors
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.APIError = void 0;
 /**

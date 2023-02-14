@@ -1,3 +1,9 @@
+/**
+ * 
+ * Utility functions for mocking and local testing.
+ * 
+ * @module test-utils
+ */
 
 import jwt from 'jsonwebtoken';
 

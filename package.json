@@ -9,7 +9,7 @@
   "private": false,
   "scripts": {
     "build": "tsc",
-    "example": "node ./example/main.js",
+    "example": "node ./example/example-express-server.js",
     "test": "jest",
     "lint": "eslint --fix --ext .ts,.js ./src ./test ./example"
   },
@@ -52,6 +52,7 @@
     "supertest": "^6.3.3",
     "ts-jest": "^28.0.1",
     "ts-node": "^10.9.1",
+    "typedoc": "^0.23.25",
     "typescript": "^4.9.5"
   },
   "dependencies": {

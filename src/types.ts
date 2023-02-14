@@ -1,3 +1,10 @@
+/**
+ * Relevant API type declarations.
+ * 
+ * @module types
+ * 
+ */
+
 
 export type UserToken = 
 {

@@ -1,35 +1,72 @@
+/**
+ * Entry point for the @unologin/node-api package.
+ *
+ * @module main
+ *
+ */
 import superagent, { SuperAgentRequest } from 'superagent';
 import * as expressMiddleware from './unologin-express';
 import type { CookieOptions } from 'express';
 import type { UserToken } from './types';
 import { UnologinRestApi } from './rest';
+import KeyManager from './key-manager';
+/** @hidden @internal */
+export declare const keyManager: KeyManager;
+/**
+ * REST API instance.
+ * @see {@link rest.UnologinRestApi}
+ */
 export declare const rest: UnologinRestApi;
+/** @module express */
 export declare const express: typeof expressMiddleware;
-/** @deprecated alias for types/UserToken */
+/** @deprecated alias for {@link UserToken} */
 export type User = UserToken;
+/** Defines unolog·in API and frontend URls */
 export interface Realm {
     apiUrl: string;
     frontendUrl: string;
 }
+/**
+ * Configuration for the API.
+ */
 export interface Options {
+    /**
+    * API key from [the dashboard](https://dashboard.unolog.in).
+    */
     apiKey: string;
+    /**
+     * Dictates the [Domain](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value) attribute for authentication cookies.
+     *
+     * Example: ```'.example.com'```
+     */
     cookiesDomain?: string;
-    realm: Realm;
-    appId: string;
-    agent: (method: string, location: string) => SuperAgentRequest;
+    /**
+     * Override the [SameSite](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#samesitesamesite-value) attribute for authentication cookies.
+     */
     cookieSameSite?: CookieOptions['sameSite'];
-    skipPublicKeyCheck?: boolean;
+    /**
+     * Configures the URL of the unolog·in API.
+     */
+    realm: Realm;
+    /**
+     * Your appId. Automatically inferred from {@link apiKey}.
+     */
+    appId: string;
+    /**
+     * Superagent-like agent.
+     * Pass your own instance of superagent or supertest.
+     *
+     * @param method method
+     * @param location url
+     * @returns SuperAgentRequest
+     */
+    agent: (method: string, location: string) => SuperAgentRequest;
 }
 export interface Cookie {
     value: string;
     maxAge: number;
 }
-interface PublicKey {
-    data: string;
-    createdAt: number;
-    expiresIn: number;
-}
-interface ApiKeyPayload {
+export interface ApiKeyPayload {
     appId: string;
 }
 export declare const realms: {
@@ -67,17 +104,13 @@ export declare function getOptions(): Options;
  */
 export declare function request<ReturnType = unknown, BodyType extends object = object>(method: string, loc: string, body?: BodyType): Promise<ReturnType>;
 /**
- * @returns public key for login token verification
- */
-export declare function getLoginTokenKey(): Promise<PublicKey>;
-/**
  * Verifies that a token is valid.
  *
  * @param token login token
  * @param args optional additional body params
- * @returns user
+ * @returns {Promise<UserToken>} user token
  *
- * @deprecated use verifyTokenAndRefresh instead
+ * @deprecated use {@link verifyTokenAndRefresh} instead
  */
 export declare function verifyLoginToken(token: string, args?: object): Promise<UserToken>;
 /**

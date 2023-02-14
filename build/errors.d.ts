@@ -1,4 +1,9 @@
 /**
+ * Structures for handling errors raised by the unolog·in API.
+ *
+ * @module errors
+ */
+/**
  * General API Error
  */
 export declare class APIError extends Error {

@@ -1,3 +1,14 @@
+/**
+ * Exports [express.js](https://expressjs.com/) handlers and utility.
+ * 
+ * Example of a fully configured express server using unolog·in.
+ * 
+ * ```javascript
+ * [[include:example/example-express-server.js]]
+ * ```
+ * 
+ * @module express
+ */
 
 import {
   Cookie,
@@ -12,7 +23,10 @@ import {
   Handler,
   NextFunction,
 } from 'express';
-import { APIError } from './errors';
+
+import {
+  APIError,
+} from './errors';
 
 // should cookies use the "secure" attribute?
 let useSecureCookies = true;
@@ -68,7 +82,7 @@ function completeCookieOptions(opts : CookieOptions) : CookieOptions
 }
 
 // not using "next" on auth errors because the request MUST be blocked
-type AuthErrorHandler = (
+export type AuthErrorHandler = (
   req : Request,
   res : Response,
 ) => unknown | Promise<unknown>;
@@ -82,7 +96,12 @@ let authErrorHandler : AuthErrorHandler = (req, res) =>
 };
 
 /**
- * [FOR LOCAL TESTING ONLY] allows to enable/disable secure cookies.
+ * Enable/disable secure cookies.
+ * 
+ * Calls will be ignored with a warning unless ```process.env``` is set to ```'development'```
+ * 
+ * You should *always* use secure cookies in production!
+ * 
  * @param b useSecureCookies
  * @returns void
  */
@@ -127,8 +146,9 @@ export function onAuthError(
 }
 
 /**
- * Adds "user"-key to res.locals.unologin Requires a cookie parser.
+ * Populates res.locals.unologin.user if the user is logged in.
  * Does nothing if no login cookie is present.
+ * Requires a cookie parser.
  * 
  * @param req req 
  * @param res res
@@ -182,8 +202,17 @@ export const parseLogin : Handler = async (req, res, next) =>
 };
 
 /**
- * Only executes next() if the user is logged in.
- * Requires parseLogin middleware
+ * 
+ * Only executes the next handler if the user is logged in.
+ * 
+ * Will trigger the {@link AuthErrorHandler} otherwise. 
+ * 
+ * Requires the {@link parseLogin} middleware mounted before it.
+ * 
+ * @see {@link onAuthError} to configure the error behavior.
+ * 
+ * @see {@link parseLogin} middleware
+ * 
  * 
  * @param req req 
  * @param res res

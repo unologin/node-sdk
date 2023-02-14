@@ -4,3 +4,7 @@
 yarn test
 yarn build
 git add build/
+
+rm -rf doc
+yarn typedoc
+git add doc/

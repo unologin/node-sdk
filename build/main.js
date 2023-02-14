@@ -1,4 +1,10 @@
 "use strict";
+/**
+ * Entry point for the @unologin/node-api package.
+ *
+ * @module main
+ *
+ */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -35,16 +41,22 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verifyTokenAndRefresh = exports.verifyLoginToken = exports.getLoginTokenKey = exports.request = exports.getOptions = exports.setup = exports.decodeApiKey = exports.defaultOptions = exports.realms = exports.express = exports.rest = void 0;
+exports.verifyTokenAndRefresh = exports.verifyLoginToken = exports.request = exports.getOptions = exports.setup = exports.decodeApiKey = exports.defaultOptions = exports.realms = exports.express = exports.rest = exports.keyManager = void 0;
 const superagent_1 = __importDefault(require("superagent"));
 const expressMiddleware = __importStar(require("./unologin-express"));
 const errors_1 = require("./errors");
 const jsonwebtoken_1 = __importStar(require("jsonwebtoken"));
 const rest_1 = require("./rest");
+const key_manager_1 = __importDefault(require("./key-manager"));
+/** @hidden @internal */
+exports.keyManager = new key_manager_1.default(module.exports);
+/**
+ * REST API instance.
+ * @see {@link rest.UnologinRestApi}
+ */
 exports.rest = new rest_1.UnologinRestApi(module.exports);
+/** @module express */
 exports.express = expressMiddleware;
-// public key for verifying login tokens
-let loginTokenKey = null;
 exports.realms = {
     live: {
         apiUrl: 'https://v1.unolog.in',
@@ -154,49 +166,13 @@ function request(method, loc, body) {
 }
 exports.request = request;
 /**
- *
- * @param key key
- * @returns key if valid
- * @throws error otherwise
- */
-function checkLoginTokenKey(key) {
-    if (getOptions().skipPublicKeyCheck ||
-        (typeof (key) === 'object' &&
-            typeof (key['data']) === 'string' &&
-            key['data'].startsWith('-----BEGIN PUBLIC KEY-----\n'))) {
-        return key;
-    }
-    else {
-        throw new Error('Invalid public key returned by API: ' + JSON.stringify(key));
-    }
-}
-/**
- * @returns public key for login token verification
- */
-function getLoginTokenKey() {
-    return __awaiter(this, void 0, void 0, function* () {
-        if ((loginTokenKey === null || loginTokenKey === void 0 ? void 0 : loginTokenKey.data) &&
-            (
-            // key has no expiration
-            !loginTokenKey.expiresIn ||
-                // or key has not expired yet
-                (loginTokenKey.createdAt + loginTokenKey.expiresIn > Date.now()))) {
-            return loginTokenKey;
-        }
-        else {
-            return (loginTokenKey = checkLoginTokenKey(yield request('GET', '/public-keys/app-login-token')));
-        }
-    });
-}
-exports.getLoginTokenKey = getLoginTokenKey;
-/**
  * Verifies that a token is valid.
  *
  * @param token login token
  * @param args optional additional body params
- * @returns user
+ * @returns {Promise<UserToken>} user token
  *
- * @deprecated use verifyTokenAndRefresh instead
+ * @deprecated use {@link verifyTokenAndRefresh} instead
  */
 function verifyLoginToken(token, args = {}) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -216,7 +192,7 @@ exports.verifyLoginToken = verifyLoginToken;
  */
 function verifyTokenAndRefresh(token, forceRefresh = false) {
     return __awaiter(this, void 0, void 0, function* () {
-        const key = yield getLoginTokenKey();
+        const key = yield exports.keyManager.getLoginTokenKey();
         try {
             const user = jsonwebtoken_1.default.verify(token, key.data);
             if (user.appId !== getOptions().appId) {

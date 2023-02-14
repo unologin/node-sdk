@@ -1,4 +1,15 @@
 "use strict";
+/**
+ * Exports [express.js](https://expressjs.com/) handlers and utility.
+ *
+ * Example of a fully configured express server using unolog·in.
+ *
+ * ```javascript
+ * [[include:example/example-express-server.js]]
+ * ```
+ *
+ * @module express
+ */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -55,7 +66,12 @@ let authErrorHandler = (req, res) => {
     res.send('Auth error: ' + ((_a = res.locals.unologin) === null || _a === void 0 ? void 0 : _a.msg) || 'unknown error');
 };
 /**
- * [FOR LOCAL TESTING ONLY] allows to enable/disable secure cookies.
+ * Enable/disable secure cookies.
+ *
+ * Calls will be ignored with a warning unless ```process.env``` is set to ```'development'```
+ *
+ * You should *always* use secure cookies in production!
+ *
  * @param b useSecureCookies
  * @returns void
  */
@@ -86,8 +102,9 @@ function onAuthError(handler) {
 }
 exports.onAuthError = onAuthError;
 /**
- * Adds "user"-key to res.locals.unologin Requires a cookie parser.
+ * Populates res.locals.unologin.user if the user is logged in.
  * Does nothing if no login cookie is present.
+ * Requires a cookie parser.
  *
  * @param req req
  * @param res res
@@ -127,8 +144,17 @@ const parseLogin = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
 });
 exports.parseLogin = parseLogin;
 /**
- * Only executes next() if the user is logged in.
- * Requires parseLogin middleware
+ *
+ * Only executes the next handler if the user is logged in.
+ *
+ * Will trigger the {@link AuthErrorHandler} otherwise.
+ *
+ * Requires the {@link parseLogin} middleware mounted before it.
+ *
+ * @see {@link onAuthError} to configure the error behavior.
+ *
+ * @see {@link parseLogin} middleware
+ *
  *
  * @param req req
  * @param res res

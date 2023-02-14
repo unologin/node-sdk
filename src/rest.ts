@@ -1,4 +1,10 @@
-
+/**
+ * Wrapper around the unolog·in REST API for querying resources.
+ * 
+ * [Documentation for the HTTP-API](https://dashboard.unolog.in/docs/http-api).
+ * 
+ * @module rest
+ */
 
 import type {
   UserToken,
@@ -149,8 +155,8 @@ export class UnologinRestApi
   }
 
   /**
-   * Get all user documents for your app.
-   * @param query optional query
+   * Get a cursor for all users matching the provided query.
+   * @param query optional query according to [the query schema](https://v1.unolog.in/schemas/apps/:appId/users/query)
    * @returns GetCursor
    */
   getUserDocuments(

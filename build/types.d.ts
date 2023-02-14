@@ -1,3 +1,9 @@
+/**
+ * Relevant API type declarations.
+ *
+ * @module types
+ *
+ */
 export type UserToken = {
     appId: string;
     asuId: string;

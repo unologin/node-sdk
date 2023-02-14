@@ -1,22 +1,29 @@
-
 /**
  * Tests for the express implementation
  */
 
 import express from 'express';
-import { mock, supermock } from 'express-supermock';
+
+import {
+  mock,
+  supermock,
+} from 'express-supermock';
 
 import supertest from 'supertest';
 
 import setCookieParser from 'set-cookie-parser';
 
-import { createApiToken } from '../src/test-utils';
+import {
+  createApiToken,
+} from '../src/test-utils';
 
-import mockApi, { createToken } from './mock';
+import mockApi, {
+  createToken,
+} from './mock';
 
 import cookieParser from 'cookie-parser';
 
-import * as unologin from '../src/main';
+import unologin, { keyManager } from '../src/main';
 
 import { 
   onAuthError,
@@ -47,8 +54,14 @@ unologin.setup(
       frontendUrl: 'https://mock-frontend.unolog.in',
     },
     agent: supermock,
-    skipPublicKeyCheck: true,
   },
+);
+
+jest.spyOn(
+  keyManager,
+  'checkLoginTokenKey',
+).mockImplementation(
+  (key) => key as any,
 );
 
 app.use(express.json());
@@ -65,6 +78,13 @@ app.post('/logout', logoutHandler);
 app.all('*', (req, res) => 
 {
   res.send({ user: res.locals.unologin?.user });
+});
+
+// eslint-disable-next-line
+app.use((err : any, req : any, res : any, next : any) => 
+{
+  console.log(err);
+  res.status(500).send(err);
 });
 
 describe('loginEventHandler', () => 

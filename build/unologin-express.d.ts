@@ -1,7 +1,23 @@
-import { Request, Response, Handler, NextFunction } from 'express';
-type AuthErrorHandler = (req: Request, res: Response) => unknown | Promise<unknown>;
 /**
- * [FOR LOCAL TESTING ONLY] allows to enable/disable secure cookies.
+ * Exports [express.js](https://expressjs.com/) handlers and utility.
+ *
+ * Example of a fully configured express server using unolog·in.
+ *
+ * ```javascript
+ * [[include:example/example-express-server.js]]
+ * ```
+ *
+ * @module express
+ */
+import { Request, Response, Handler, NextFunction } from 'express';
+export type AuthErrorHandler = (req: Request, res: Response) => unknown | Promise<unknown>;
+/**
+ * Enable/disable secure cookies.
+ *
+ * Calls will be ignored with a warning unless ```process.env``` is set to ```'development'```
+ *
+ * You should *always* use secure cookies in production!
+ *
  * @param b useSecureCookies
  * @returns void
  */
@@ -14,8 +30,9 @@ export declare function debug_useSecureCookies(b: boolean): void;
  */
 export declare function onAuthError(handler: AuthErrorHandler): void;
 /**
- * Adds "user"-key to res.locals.unologin Requires a cookie parser.
+ * Populates res.locals.unologin.user if the user is logged in.
  * Does nothing if no login cookie is present.
+ * Requires a cookie parser.
  *
  * @param req req
  * @param res res
@@ -24,8 +41,17 @@ export declare function onAuthError(handler: AuthErrorHandler): void;
  */
 export declare const parseLogin: Handler;
 /**
- * Only executes next() if the user is logged in.
- * Requires parseLogin middleware
+ *
+ * Only executes the next handler if the user is logged in.
+ *
+ * Will trigger the {@link AuthErrorHandler} otherwise.
+ *
+ * Requires the {@link parseLogin} middleware mounted before it.
+ *
+ * @see {@link onAuthError} to configure the error behavior.
+ *
+ * @see {@link parseLogin} middleware
+ *
  *
  * @param req req
  * @param res res
@@ -51,4 +77,3 @@ export declare const loginEventHandler: Handler;
  * @returns Promise<void>
  */
 export declare const logoutHandler: (_: Request, res: Response, next?: NextFunction) => Promise<void>;
-export {};
