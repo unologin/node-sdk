@@ -19,24 +19,37 @@ class GetCursor {
         this.client = client;
         this.resource = resource;
         this.query = query;
-        this.lastDocument = null;
         this.hasNextBatch = true;
+        this.continuationToken = null;
     }
     /**
      * @returns Promise of next batch in iterator
      */
     nextBatch() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.lastDocument !== null) {
-                this.query.set('after', JSON.stringify(this.lastDocument));
+            if (this.continuationToken !== null) {
+                this.query.set('after', JSON.stringify(this.continuationToken));
             }
             const res = yield this.client.request('GET', this.resource + '?' + this.query);
             this.hasNextBatch = res.results.length < res.total;
-            this.lastDocument = res.results.length > 0 ?
-                res.results[res.results.length - 1] :
-                null;
-            return res.results;
+            const sortBy = (this.query.get('sortBy') || '_id');
+            const lastElement = res.results[res.results.length - 1] || null;
+            this.continuationToken = lastElement &&
+                (typeof (lastElement) === 'object' &&
+                    sortBy in lastElement ?
+                    // when using a sortBy statement, the token can be reduced to the sort key
+                    { [sortBy]: lastElement[sortBy] } :
+                    // otherwise, the element itself is the continuation token
+                    lastElement);
+            return {
+                results: res.results,
+                continuationToken: this.continuationToken,
+            };
         });
+    }
+    /** @returns continuation token */
+    getContinuationToken() {
+        return this.continuationToken;
     }
     /** @returns boolean */
     batchesEmpty() {
@@ -51,7 +64,7 @@ class GetCursor {
         return __awaiter(this, void 0, void 0, function* () {
             while (this.hasNextBatch) {
                 const batch = yield this.nextBatch();
-                batch.forEach(fn);
+                batch.results.forEach(fn);
             }
         });
     }
@@ -78,12 +91,27 @@ class UnologinRestApi {
         return `/apps/${this.client.getOptions().appId}`;
     }
     /**
+     * @param query query
+     * @returns URLSearchParams
+     */
+    queryToUrlSearchParams(query) {
+        return new URLSearchParams(Object.entries(query)
+            .map(([k, v]) => [
+            k,
+            typeof (v) === 'object' ?
+                JSON.stringify(v) :
+                v,
+        ]));
+    }
+    /**
      * Get all user documents for your app.
      * @param query optional query
      * @returns GetCursor
      */
-    getUserDocuments(query) {
-        return new GetCursor(this.client, this.getAppUrl() + '/users', query);
+    getUserDocuments(query = {}) {
+        return new GetCursor(this.client, this.getAppUrl() + '/users', query instanceof URLSearchParams ?
+            query :
+            this.queryToUrlSearchParams(query));
     }
     /**
      * Get a specific user document.

@@ -22,6 +22,12 @@ import type {
   UserToken,
 } from './types';
 
+import {
+  UnologinRestApi,
+} from './rest';
+
+export const rest = new UnologinRestApi(module.exports);
+
 export const express = expressMiddleware;
 
 /** @deprecated alias for types/UserToken */
@@ -74,7 +80,7 @@ export const realms =
   },
 };
 
-const defaultOptions =
+export const defaultOptions =
 {
   realm: realms.live,
   agent: superagent,

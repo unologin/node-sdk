@@ -12,15 +12,21 @@ export type GetResponse<T> =
   total: number;
 }
 
+export type GetCursorBatch<T> = 
+{
+  results: T[];
+  continuationToken: Partial<T> | null;
+}
+
 /**
  * Wrapper around a REST GET request
  */
 export class GetCursor<T>
 {
-  private lastDocument : T | null = null;
-
   private hasNextBatch = true;
 
+  private continuationToken : Partial<T> | null = null;
+  
   /** */
   constructor(
     public readonly client : Pick<IUnologinClient, 'request'>,
@@ -31,11 +37,11 @@ export class GetCursor<T>
   /**
    * @returns Promise of next batch in iterator
    */
-  public async nextBatch()
+  public async nextBatch() : Promise<GetCursorBatch<T>>
   {
-    if (this.lastDocument !== null)
+    if (this.continuationToken !== null)
     {
-      this.query.set('after', JSON.stringify(this.lastDocument));
+      this.query.set('after', JSON.stringify(this.continuationToken));
     }
 
     const res = await this.client.request<GetResponse<T>>(
@@ -45,12 +51,30 @@ export class GetCursor<T>
 
     this.hasNextBatch = res.results.length < res.total;
     
-    this.lastDocument = res.results.length > 0 ?
-      res.results[res.results.length - 1] :
-      null
-    ;
+    const sortBy = (this.query.get('sortBy') || '_id') as keyof T;
 
-    return res.results;
+    const lastElement = res.results[res.results.length - 1] || null;
+
+    this.continuationToken = lastElement &&
+      (
+        typeof(lastElement) === 'object' && 
+        sortBy in lastElement ?
+          // when using a sortBy statement, the token can be reduced to the sort key
+          { [sortBy]: lastElement[sortBy] } as Partial<T> :
+          // otherwise, the element itself is the continuation token
+          lastElement
+      );
+
+    return {
+      results: res.results,
+      continuationToken: this.continuationToken,
+    };
+  }
+
+  /** @returns continuation token */
+  public getContinuationToken()
+  {
+    return this.continuationToken;
   }
 
   /** @returns boolean */
@@ -70,7 +94,7 @@ export class GetCursor<T>
     {
       const batch = await this.nextBatch();
 
-      batch.forEach(fn);
+      batch.results.forEach(fn);
     }
   }
 
@@ -106,18 +130,39 @@ export class UnologinRestApi
   }
 
   /**
+   * @param query query
+   * @returns URLSearchParams
+   */
+  public queryToUrlSearchParams(query : object)
+  {
+    return new URLSearchParams(
+      Object.entries(query)
+        .map(
+          ([k, v]) => [
+            k,
+            typeof(v) === 'object' ?
+              JSON.stringify(v) :
+              v,
+          ],
+        ),
+    );
+  }
+
+  /**
    * Get all user documents for your app.
    * @param query optional query
    * @returns GetCursor
    */
   getUserDocuments(
-    query?: URLSearchParams,
+    query : URLSearchParams | object = {},
   ) : GetCursor<UserDocument>
   {
     return new GetCursor(
       this.client,
       this.getAppUrl() + '/users',
-      query,
+      query instanceof URLSearchParams ? 
+        query :
+        this.queryToUrlSearchParams(query),
     );
   }
 

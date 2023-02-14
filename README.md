@@ -38,6 +38,57 @@ unologin.setup(
 );
 ```
 
+## REST API
+
+The library includes bindings for the [unolog·in REST API](https://dashboard.unolog.in/docs/http-api) through the exported ```rest``` object.
+
+More elaborate working examples can be found in ```example/main.js``` in this repository.
+
+### Getting details for a single user
+
+```javascript
+const unologin = require('@unologin/node-api');
+
+// user token may be retrieved using 
+// userToken = res.locals.unologin.user in express
+
+// returns Promise<UserDocument> (see types)
+// which includes all information the user 
+// has shared with your app
+const user = unologin.rest.getUser(userToken);
+
+```
+
+### Querying users
+
+You can query you app's users using [this query schema](https://v1.unolog.in/schemas/apps/:appId/users/query). Omitting the query will return a cursor for all users.
+
+```javascript
+const unologin = require('@unologin/node-api');
+
+// pass an optional query (object or URLSearchParams)
+// returns a GetCursor instance which can be used to iterate over users
+const cursor = unologin.rest.getUsers(query)
+
+// returns Promise<GetCursorBatch>
+// which represents a subset of all users matching the query
+// see example/main.js for an example on iterating this way
+cursor.nextBatch()
+
+// returns Promise<UserDocument | null>
+cursor.next()
+
+// runs the callback function for every
+// user matching the query
+// returns Promise<void>
+cursor.forEach((user) => console.log(user))
+
+// turns the cursor into an array 
+// this is not recommended for larger queries
+// returns Promise<UserDocument[]>
+cursor.toArray()
+```
+
 ## Usage with [express.js](https://expressjs.com/)
 
 We have built some handlers for you to set up unolog·in on your server with only a few lines of code. 

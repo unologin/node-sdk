@@ -38,7 +38,7 @@ describe('GetCursor', () =>
 
     while (!cursor.batchesEmpty())
     {
-      batches.push(await cursor.nextBatch());
+      batches.push(await cursor.nextBatch().then(({results}) => results));
     }
 
     expect(request)

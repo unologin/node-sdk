@@ -2,6 +2,8 @@ import superagent, { SuperAgentRequest } from 'superagent';
 import * as expressMiddleware from './unologin-express';
 import type { CookieOptions } from 'express';
 import type { UserToken } from './types';
+import { UnologinRestApi } from './rest';
+export declare const rest: UnologinRestApi;
 export declare const express: typeof expressMiddleware;
 /** @deprecated alias for types/UserToken */
 export type User = UserToken;
@@ -36,7 +38,7 @@ export declare const realms: {
         frontendUrl: string;
     };
 };
-declare const defaultOptions: {
+export declare const defaultOptions: {
     realm: {
         apiUrl: string;
         frontendUrl: string;

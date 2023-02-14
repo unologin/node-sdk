@@ -35,11 +35,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verifyTokenAndRefresh = exports.verifyLoginToken = exports.getLoginTokenKey = exports.request = exports.getOptions = exports.setup = exports.decodeApiKey = exports.realms = exports.express = void 0;
+exports.verifyTokenAndRefresh = exports.verifyLoginToken = exports.getLoginTokenKey = exports.request = exports.getOptions = exports.setup = exports.decodeApiKey = exports.defaultOptions = exports.realms = exports.express = exports.rest = void 0;
 const superagent_1 = __importDefault(require("superagent"));
 const expressMiddleware = __importStar(require("./unologin-express"));
 const errors_1 = require("./errors");
 const jsonwebtoken_1 = __importStar(require("jsonwebtoken"));
+const rest_1 = require("./rest");
+exports.rest = new rest_1.UnologinRestApi(module.exports);
 exports.express = expressMiddleware;
 // public key for verifying login tokens
 let loginTokenKey = null;
@@ -49,7 +51,7 @@ exports.realms = {
         frontendUrl: 'https://login.unolog.in',
     },
 };
-const defaultOptions = {
+exports.defaultOptions = {
     realm: exports.realms.live,
     agent: superagent_1.default,
 };
@@ -81,7 +83,7 @@ exports.decodeApiKey = decodeApiKey;
 function setup(opts) {
     try {
         const token = decodeApiKey(opts.apiKey);
-        const currentOptions = options || defaultOptions;
+        const currentOptions = options || exports.defaultOptions;
         options = Object.assign(Object.assign(Object.assign({}, currentOptions), opts), { appId: token.appId });
     }
     catch (e) {
