@@ -20,7 +20,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.logoutHandler = exports.loginEventHandler = exports.requireLogin = exports.parseLogin = exports.onAuthError = exports.debug_useSecureCookies = void 0;
+exports.logoutHandler = exports.loginEventHandler = exports.requireLogin = exports.parseLogin = exports.getUserToken = exports.onLoginSuccess = exports.onAuthError = exports.debug_useSecureCookies = void 0;
 const main_1 = require("./main");
 const errors_1 = require("./errors");
 // should cookies use the "secure" attribute?
@@ -65,6 +65,7 @@ let authErrorHandler = (req, res) => {
     res.status(401);
     res.send('Auth error: ' + ((_a = res.locals.unologin) === null || _a === void 0 ? void 0 : _a.msg) || 'unknown error');
 };
+let loginSuccessHandler = null;
 /**
  * Enable/disable secure cookies.
  *
@@ -102,7 +103,35 @@ function onAuthError(handler) {
 }
 exports.onAuthError = onAuthError;
 /**
- * Populates res.locals.unologin.user if the user is logged in.
+ * Add a hook that is called after the login event has finished but before the response is sent to the client.
+ *
+ *
+ * {@link getUserToken}(res) will be available regardless of {@link parseLogin}.
+ *
+ * @param handler Express handler, may be asynchronous
+ * @returns void
+ */
+function onLoginSuccess(handler) {
+    loginSuccessHandler = handler;
+}
+exports.onLoginSuccess = onLoginSuccess;
+/**
+ * Extracts the UserToken from res.locals.unologin.
+ *
+ * Returns null if not logged in.
+ *
+ * Will only return the token if preceded by {@link parseLogin} or in {@link onLoginSuccess}. Will return ```null``` otherwise.
+ *
+ * @param res Express Response object
+ * @returns {UserToken | null} token
+ */
+function getUserToken(res) {
+    var _a;
+    return ((_a = res.locals.unologin) === null || _a === void 0 ? void 0 : _a.user) || null;
+}
+exports.getUserToken = getUserToken;
+/**
+ * Populates {@link getUserToken} with the user token if the user is logged in.
  * Does nothing if no login cookie is present.
  * Requires a cookie parser.
  *
@@ -162,8 +191,7 @@ exports.parseLogin = parseLogin;
  * @returns Promise<void>
  */
 const requireLogin = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { user } = res.locals.unologin;
-    if (user) {
+    if (getUserToken(res)) {
         next();
     }
     else {
@@ -183,7 +211,9 @@ function setCookies(res, cookie) {
     res.cookie(cookies.loginState.name, 'success', completeCookieOptions(Object.assign(Object.assign({}, cookies.loginState.options), { maxAge: cookie.maxAge })));
 }
 /**
- * Express middleware for handling the login process.
+ * Express middleware for handling the login event.
+ *
+ * @see {@link onLoginSuccess} for custom behavior
  *
  * @param req req
  * @param res res
@@ -192,16 +222,19 @@ function setCookies(res, cookie) {
  */
 const loginEventHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _d;
+    var _e;
     // token provided by the user
     const token = (req.query.token || req.body.token);
     // error message in case an error occurs
     let msg = null;
     try {
         // verify the login token
-        const [, cookie] = yield (0, main_1.verifyTokenAndRefresh)(token, 
+        const [userToken, cookie] = yield (0, main_1.verifyTokenAndRefresh)(token, 
         // force refresh token on login
         true);
         cookie && setCookies(res, cookie);
+        (_e = res.locals).unologin || (_e.unologin = {});
+        res.locals.unologin.user = userToken;
     }
     catch (e) {
         if (e instanceof errors_1.APIError &&
@@ -220,6 +253,9 @@ const loginEventHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, 
     msg && url.searchParams.set('loginHandlerMsg', msg);
     url.searchParams.set('appId', (0, main_1.getOptions)().appId);
     url.searchParams.set('client', 'Web');
+    if (!msg && loginSuccessHandler) {
+        yield loginSuccessHandler(req, res);
+    }
     res.redirect(url.href);
     res.send();
 });

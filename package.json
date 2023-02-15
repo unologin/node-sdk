@@ -1,6 +1,6 @@
 {
   "name": "@unologin/node-api",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "description": "unologin node api including express handlers",
   "main": "build/main.js",
   "files": [

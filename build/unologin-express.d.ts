@@ -10,7 +10,9 @@
  * @module express
  */
 import { Request, Response, Handler, NextFunction } from 'express';
+import { UserToken } from './types';
 export type AuthErrorHandler = (req: Request, res: Response) => unknown | Promise<unknown>;
+export type LoginSuccessHandler = (req: Request, res: Response) => unknown | Promise<unknown>;
 /**
  * Enable/disable secure cookies.
  *
@@ -30,7 +32,28 @@ export declare function debug_useSecureCookies(b: boolean): void;
  */
 export declare function onAuthError(handler: AuthErrorHandler): void;
 /**
- * Populates res.locals.unologin.user if the user is logged in.
+ * Add a hook that is called after the login event has finished but before the response is sent to the client.
+ *
+ *
+ * {@link getUserToken}(res) will be available regardless of {@link parseLogin}.
+ *
+ * @param handler Express handler, may be asynchronous
+ * @returns void
+ */
+export declare function onLoginSuccess(handler: LoginSuccessHandler): void;
+/**
+ * Extracts the UserToken from res.locals.unologin.
+ *
+ * Returns null if not logged in.
+ *
+ * Will only return the token if preceded by {@link parseLogin} or in {@link onLoginSuccess}. Will return ```null``` otherwise.
+ *
+ * @param res Express Response object
+ * @returns {UserToken | null} token
+ */
+export declare function getUserToken(res: Response): UserToken | null;
+/**
+ * Populates {@link getUserToken} with the user token if the user is logged in.
  * Does nothing if no login cookie is present.
  * Requires a cookie parser.
  *
@@ -60,7 +83,9 @@ export declare const parseLogin: Handler;
  */
 export declare const requireLogin: Handler;
 /**
- * Express middleware for handling the login process.
+ * Express middleware for handling the login event.
+ *
+ * @see {@link onLoginSuccess} for custom behavior
  *
  * @param req req
  * @param res res

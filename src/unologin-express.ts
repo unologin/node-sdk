@@ -27,6 +27,7 @@ import {
 import {
   APIError,
 } from './errors';
+import { UserToken } from './types';
 
 // should cookies use the "secure" attribute?
 let useSecureCookies = true;
@@ -87,6 +88,11 @@ export type AuthErrorHandler = (
   res : Response,
 ) => unknown | Promise<unknown>;
 
+export type LoginSuccessHandler = (
+  req : Request,
+  res : Response
+) => unknown | Promise<unknown>;
+
 let authErrorHandler : AuthErrorHandler = (req, res) =>
 {
   logoutHandler(req, res);
@@ -94,6 +100,9 @@ let authErrorHandler : AuthErrorHandler = (req, res) =>
   res.status(401);
   res.send('Auth error: ' + res.locals.unologin?.msg || 'unknown error');
 };
+
+let loginSuccessHandler : LoginSuccessHandler | null = null;
+
 
 /**
  * Enable/disable secure cookies.
@@ -145,8 +154,40 @@ export function onAuthError(
   authErrorHandler = handler;
 }
 
+
 /**
- * Populates res.locals.unologin.user if the user is logged in.
+ * Add a hook that is called after the login event has finished but before the response is sent to the client. 
+ * 
+ * 
+ * {@link getUserToken}(res) will be available regardless of {@link parseLogin}.
+ * 
+ * @param handler Express handler, may be asynchronous
+ * @returns void
+ */
+export function onLoginSuccess(
+  handler: LoginSuccessHandler,
+) : void
+{
+  loginSuccessHandler = handler;
+}
+
+/**
+ * Extracts the UserToken from res.locals.unologin. 
+ * 
+ * Returns null if not logged in.
+ * 
+ * Will only return the token if preceded by {@link parseLogin} or in {@link onLoginSuccess}. Will return ```null``` otherwise.
+ * 
+ * @param res Express Response object
+ * @returns {UserToken | null} token 
+ */
+export function getUserToken(res : Response) : UserToken | null
+{
+  return res.locals.unologin?.user || null;
+}
+
+/**
+ * Populates {@link getUserToken} with the user token if the user is logged in.
  * Does nothing if no login cookie is present.
  * Requires a cookie parser.
  * 
@@ -221,9 +262,7 @@ export const parseLogin : Handler = async (req, res, next) =>
  */
 export const requireLogin : Handler = async (req, res, next) => 
 {
-  const { user } = res.locals.unologin;
-
-  if (user)
+  if (getUserToken(res))
   {
     next();
   }
@@ -270,7 +309,9 @@ function setCookies(
 }
 
 /**
- * Express middleware for handling the login process.
+ * Express middleware for handling the login event.
+ * 
+ * @see {@link onLoginSuccess} for custom behavior
  * 
  * @param req req 
  * @param res res
@@ -288,13 +329,16 @@ export const loginEventHandler : Handler = async (req, res, next) =>
   try
   {
     // verify the login token
-    const [, cookie] = await verifyTokenAndRefresh(
+    const [userToken, cookie] = await verifyTokenAndRefresh(
       token,
       // force refresh token on login
       true,
     );
 
     cookie && setCookies(res, cookie);
+
+    res.locals.unologin ||= {};
+    res.locals.unologin.user = userToken;
   }
   catch (e)
   {
@@ -322,6 +366,11 @@ export const loginEventHandler : Handler = async (req, res, next) =>
   msg && url.searchParams.set('loginHandlerMsg', msg);
   url.searchParams.set('appId', getOptions().appId);
   url.searchParams.set('client', 'Web');
+
+  if (!msg && loginSuccessHandler)
+  {
+    await loginSuccessHandler(req, res);
+  }
 
   res.redirect(url.href);
 

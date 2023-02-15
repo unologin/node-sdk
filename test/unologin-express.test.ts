@@ -31,6 +31,7 @@ import {
   requireLogin,
   loginEventHandler, 
   logoutHandler,
+  getUserToken,
 } from '../src/unologin-express';
 
 mock('mock-api.unolog.in', { router: mockApi });
@@ -57,6 +58,13 @@ unologin.setup(
   },
 );
 
+const onLoginSuccess = jest.fn()
+  .mockImplementation(
+    () => Promise.resolve(),
+  );
+
+unologin.express.onLoginSuccess(onLoginSuccess);
+
 jest.spyOn(
   keyManager,
   'checkLoginTokenKey',
@@ -77,7 +85,7 @@ app.post('/logout', logoutHandler);
 
 app.all('*', (req, res) => 
 {
-  res.send({ user: res.locals.unologin?.user });
+  res.send({ user: getUserToken(res) });
 });
 
 // eslint-disable-next-line
@@ -100,6 +108,8 @@ describe('loginEventHandler', () =>
 
   it('redirects to the unologin front end with success=true', async () => 
   {
+    expect(onLoginSuccess).toHaveBeenCalledTimes(0);
+
     const token = createToken(user);
 
     const origin = 'https://mock-frontend.unolog.in';
@@ -133,6 +143,19 @@ describe('loginEventHandler', () =>
     expect(statusCookie.domain).toBe(cookiesDomain);
 
     cookies = headers['set-cookie'];
+
+    expect(onLoginSuccess)
+      .toHaveBeenCalledTimes(1);
+
+    // first call, second argument is res : Response
+    const userToken = onLoginSuccess.mock.calls[0][1].locals?.unologin?.user;
+
+    // make sure that onLoginSuccess is called with the parsed UserToken
+    for (const [key, value] of Object.entries(user))
+    {
+      expect(userToken[key])
+        .toStrictEqual(value);
+    }
   });
 
   it('set-cookie results in valid login credentials', async () => 
@@ -152,6 +175,8 @@ describe('loginEventHandler', () =>
 
   it('redirects to the unologin front end with success=false', async () => 
   {
+    onLoginSuccess.mockClear();
+
     const token = 'invalid';
 
     const origin = 'https://mock-frontend.unolog.in';
@@ -170,6 +195,9 @@ describe('loginEventHandler', () =>
     expect(url.searchParams.get('loginHandlerMsg')).toBe('jwt malformed');
 
     expect(headers['set-cookie']).toBe(undefined);
+
+    expect(onLoginSuccess)
+      .toHaveBeenCalledTimes(0);
   });
 
 });
@@ -185,7 +213,7 @@ describe('parseLogin', () =>
 
     const { user } = JSON.parse(res.text);
 
-    expect(user).toBe(undefined);
+    expect(user).toBe(null);
 
   });
 
@@ -206,7 +234,7 @@ describe('parseLogin', () =>
 
     const { user } = JSON.parse(res.text);
 
-    expect(user).toBe(undefined);
+    expect(user).toBe(null);
 
   });
 

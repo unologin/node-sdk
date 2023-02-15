@@ -51,7 +51,7 @@ More elaborate working examples can be found in ```example/main.js``` in this re
 const unologin = require('@unologin/node-api');
 
 // user token may be retrieved using 
-// userToken = res.locals.unologin.user in express
+// userToken = unologin.express.getUserToken(res) in express handlers
 
 // returns Promise<UserDocument> (see types)
 // which includes all information the user 
@@ -149,6 +149,23 @@ After going through the login/registration steps, your users will be redirected 
 app.use('/unologin/login', unologin.express.loginEventHandler);
 ```
 
+## Custom logic after the login event
+
+Use ```onLoginSuccess``` to add custom synchronous or asynchronous logic to be executed after any successful login.
+
+```javascript
+
+unologin.express.onLoginSuccess(
+  function (req, res)
+  {
+    const user = unologin.express.getUserToken(res);
+
+    console.log(`User ${user.asuId} just logged in!`);
+  },
+);
+
+```
+
 # Logout
 
 To log out the user, use the ```logoutHandler``` middleware. Note that the middleware won't emit a response. It is up to you to do that.
@@ -190,8 +207,8 @@ app.use('*', unologin.express.parseLogin);
 // example of accessing the user data
 app.get('/me', function(req, res) => 
 {
-  // keep in mind that `user` may be undefined
-  res.send(res.locals.unologin.user)
+  // keep in mind that `getUserToken` may return null if not logged in
+  res.send(unologin.express.getUserToken(res))
 });
 ```
 
