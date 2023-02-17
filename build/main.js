@@ -43,7 +43,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.verifyTokenAndRefresh = exports.verifyLoginToken = exports.request = exports.getOptions = exports.setup = exports.decodeApiKey = exports.defaultOptions = exports.realms = exports.express = exports.rest = exports.keyManager = void 0;
 const superagent_1 = __importDefault(require("superagent"));
-const expressMiddleware = __importStar(require("./unologin-express"));
+const express_handlers_1 = __importDefault(require("./express-handlers"));
 const errors_1 = require("./errors");
 const jsonwebtoken_1 = __importStar(require("jsonwebtoken"));
 const rest_1 = require("./rest");
@@ -56,7 +56,7 @@ exports.keyManager = new key_manager_1.default(module.exports);
  */
 exports.rest = new rest_1.UnologinRestApi(module.exports);
 /** @module express */
-exports.express = expressMiddleware;
+exports.express = new express_handlers_1.default(module.exports);
 exports.realms = {
     live: {
         apiUrl: 'https://v1.unolog.in',
@@ -99,7 +99,7 @@ function setup(opts) {
         options = Object.assign(Object.assign(Object.assign({}, currentOptions), opts), { appId: token.appId });
     }
     catch (e) {
-        throw new Error('malformed API key');
+        throw new Error('Malformed API key.');
     }
 }
 exports.setup = setup;
@@ -122,6 +122,7 @@ exports.getOptions = getOptions;
  * @returns response
  */
 function request(method, loc, body) {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         let response;
         const url = new URL(loc, getOptions().realm.apiUrl).href;
@@ -139,8 +140,7 @@ function request(method, loc, body) {
                 throw e;
             }
         }
-        const result = response.headers['content-type']
-            .startsWith('application/json') ?
+        const result = ((_a = response.headers['content-type']) === null || _a === void 0 ? void 0 : _a.startsWith('application/json')) ?
             JSON.parse(response.text) :
             response.text;
         if (

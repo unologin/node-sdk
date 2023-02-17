@@ -1,11 +1,12 @@
 /**
- * tests that all exports work as expected
+ * tests general main behavior and that all exports work as expected
  */
 
 import unologin from '../src/main';
 
 import * as unologinStar from '../src/main';
 import { UnologinRestApi } from '../src/rest';
+
 
 test('default import and * import', () => 
 {
@@ -66,4 +67,14 @@ test('exported REST API', async () =>
 
   expect(request)
     .toHaveBeenCalledTimes(1);
+});
+
+describe('setup', () => 
+{
+  it('Throws on invalid API key', ()=> 
+  {
+    expect(
+      () => unologin.setup({ apiKey: 'invalid' }),
+    ).toThrow('Malformed API key.');
+  });
 });

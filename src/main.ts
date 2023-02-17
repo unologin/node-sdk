@@ -9,8 +9,8 @@ import superagent, {
   SuperAgentRequest,
 } from 'superagent';
 
-import * as expressMiddleware 
-  from './unologin-express';
+import ExpressHandlers 
+  from './express-handlers';
 
 import {
   APIError,
@@ -26,6 +26,7 @@ import type {
 
 import type {
   UserToken,
+  LoginCookie,
 } from './types';
 
 import {
@@ -33,6 +34,9 @@ import {
 } from './rest';
 
 import KeyManager from './key-manager';
+
+/** @deprecated alias for {@link LoginCookie} */
+export type Cookie = LoginCookie;
 
 /** @hidden @internal */
 export const keyManager = new KeyManager(module.exports);
@@ -44,7 +48,7 @@ export const keyManager = new KeyManager(module.exports);
 export const rest = new UnologinRestApi(module.exports);
 
 /** @module express */
-export const express = expressMiddleware;
+export const express = new ExpressHandlers(module.exports);
 
 /** @deprecated alias for {@link UserToken} */
 export type User = UserToken;
@@ -99,11 +103,6 @@ export interface Options
   agent: (method: string, location: string) => SuperAgentRequest;
 }
 
-export interface Cookie
-{
-  value: string;
-  maxAge: number;
-}
 
 export interface ApiKeyPayload
 {
@@ -182,7 +181,7 @@ export function setup(
   }
   catch (e)
   {
-    throw new Error('malformed API key');
+    throw new Error('Malformed API key.');
   }
 }
 
@@ -247,7 +246,7 @@ export async function request<
   }
 
   const result = response.headers['content-type']
-    .startsWith('application/json') ?
+    ?.startsWith('application/json') ?
     JSON.parse(response.text) as unknown :
     response.text;
 

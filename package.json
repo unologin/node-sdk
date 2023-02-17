@@ -1,6 +1,6 @@
 {
   "name": "@unologin/node-api",
-  "version": "2.3.2",
+  "version": "2.4.0-nextjs",
   "description": "unologin node api including express handlers",
   "main": "build/main.js",
   "files": [
@@ -48,6 +48,7 @@
     "express-supermock": "^1.0.1",
     "husky": "^7.0.4",
     "jest": "^28.0.3",
+    "next": "^13.1.6",
     "set-cookie-parser": "^2.4.8",
     "supertest": "^6.3.3",
     "ts-jest": "^28.0.1",

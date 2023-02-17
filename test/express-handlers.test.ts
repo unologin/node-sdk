@@ -25,14 +25,14 @@ import cookieParser from 'cookie-parser';
 
 import unologin, { keyManager } from '../src/main';
 
-import { 
+const { 
   onAuthError,
   parseLogin,
   requireLogin,
   loginEventHandler, 
   logoutHandler,
   getUserToken,
-} from '../src/unologin-express';
+} = unologin.express;
 
 mock('mock-api.unolog.in', { router: mockApi });
 
@@ -91,7 +91,7 @@ app.all('*', (req, res) =>
 // eslint-disable-next-line
 app.use((err : any, req : any, res : any, next : any) => 
 {
-  console.log(err);
+  console.error('Internal Error: ', req.method, req.url, err);
   res.status(500).send(err);
 });
 
@@ -147,8 +147,8 @@ describe('loginEventHandler', () =>
     expect(onLoginSuccess)
       .toHaveBeenCalledTimes(1);
 
-    // first call, second argument is res : Response
-    const userToken = onLoginSuccess.mock.calls[0][1].locals?.unologin?.user;
+    // first call, third arg is userToken
+    const userToken = onLoginSuccess.mock.calls[0][2];
 
     // make sure that onLoginSuccess is called with the parsed UserToken
     for (const [key, value] of Object.entries(user))

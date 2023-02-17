@@ -5,11 +5,13 @@
  *
  */
 import superagent, { SuperAgentRequest } from 'superagent';
-import * as expressMiddleware from './unologin-express';
+import ExpressHandlers from './express-handlers';
 import type { CookieOptions } from 'express';
-import type { UserToken } from './types';
+import type { UserToken, LoginCookie } from './types';
 import { UnologinRestApi } from './rest';
 import KeyManager from './key-manager';
+/** @deprecated alias for {@link LoginCookie} */
+export type Cookie = LoginCookie;
 /** @hidden @internal */
 export declare const keyManager: KeyManager;
 /**
@@ -18,7 +20,7 @@ export declare const keyManager: KeyManager;
  */
 export declare const rest: UnologinRestApi;
 /** @module express */
-export declare const express: typeof expressMiddleware;
+export declare const express: ExpressHandlers;
 /** @deprecated alias for {@link UserToken} */
 export type User = UserToken;
 /** Defines unolog·in API and frontend URls */
@@ -61,10 +63,6 @@ export interface Options {
      * @returns SuperAgentRequest
      */
     agent: (method: string, location: string) => SuperAgentRequest;
-}
-export interface Cookie {
-    value: string;
-    maxAge: number;
 }
 export interface ApiKeyPayload {
     appId: string;
