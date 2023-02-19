@@ -10,8 +10,6 @@ import type { CookieOptions } from 'express';
 import type { UserToken, LoginCookie } from './types';
 import { UnologinRestApi } from './rest';
 import KeyManager from './key-manager';
-/** @deprecated alias for {@link LoginCookie} */
-export type Cookie = LoginCookie;
 /** @hidden @internal */
 export declare const keyManager: KeyManager;
 /**
@@ -21,7 +19,7 @@ export declare const keyManager: KeyManager;
 export declare const rest: UnologinRestApi;
 /** @module express */
 export declare const express: ExpressHandlers;
-/** @deprecated alias for {@link UserToken} */
+/** @deprecated alias for {@link types.UserToken} */
 export type User = UserToken;
 /** Defines unolog·in API and frontend URls */
 export interface Realm {
@@ -63,6 +61,11 @@ export interface Options {
      * @returns SuperAgentRequest
      */
     agent: (method: string, location: string) => SuperAgentRequest;
+    /**
+     * Disable secure cookies.
+     * Will only take effect if ```process.env.NODE_ENV === 'development'```.
+     */
+    disableSecureCookies?: boolean;
 }
 export interface ApiKeyPayload {
     appId: string;
@@ -119,6 +122,6 @@ export declare function verifyLoginToken(token: string, args?: object): Promise<
  * @returns [user, cookie | null]
  * @throws if token invalid
  */
-export declare function verifyTokenAndRefresh(token: string, forceRefresh?: boolean): Promise<[UserToken, Cookie | null]>;
+export declare function verifyTokenAndRefresh(token: string, forceRefresh?: boolean): Promise<[UserToken, LoginCookie | null]>;
 declare const _default: typeof import("./main.js");
 export default _default;

@@ -16,7 +16,35 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UnologinRestApi = exports.GetCursor = void 0;
+exports.UnologinRestApi = exports.GetCursor = exports.userHandleToQuery = exports.validateUserHandleSchema = void 0;
+const errors_1 = require("./errors");
+/**
+ * Validates that the provided UserHandle is complete and can be used to query users.
+ * Passing an invalid user handle may lead to empty queries, leading to undefined behavior.
+ * @param handle {@link types.UserHandle}
+ * @returns handle {@link types.UserHandle} if valid
+ * @throws TypeError
+ */
+function validateUserHandleSchema(handle) {
+    if (('appLoginToken' in handle && (typeof handle.appLoginToken) === 'string') ||
+        ('asuId' in handle && (typeof handle.asuId) === 'string')) {
+        return handle;
+    }
+    else {
+        throw new TypeError('Invalid user handle: \n' + JSON.stringify(handle, null, 2));
+    }
+}
+exports.validateUserHandleSchema = validateUserHandleSchema;
+/**
+ * Validates user handle and converts it into URLSearchParams.
+ *
+ * @param handle {@link types.UserHandle}
+ * @returns URLSearchParams for the user handle.
+ */
+function userHandleToQuery(handle) {
+    return new URLSearchParams(validateUserHandleSchema(handle));
+}
+exports.userHandleToQuery = userHandleToQuery;
 /**
  * Wrapper around a REST GET request
  */
@@ -122,11 +150,19 @@ class UnologinRestApi {
     }
     /**
      * Get a specific user document.
-     * @param user user token
+     * @param handle {@link types.UserHandle}
      * @returns user document
      */
-    getUserDocument({ asuId }) {
-        return this.client.request('GET', this.getAppUrl() + '/users/' + asuId);
+    getUserDocument(handle) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { results } = yield this.client.request('GET', this.getAppUrl() + '/users/?' + userHandleToQuery(handle));
+            if (results.length > 0) {
+                return results[0];
+            }
+            else {
+                throw new errors_1.APIError(404, 'User not found.', { handle });
+            }
+        });
     }
 }
 exports.UnologinRestApi = UnologinRestApi;

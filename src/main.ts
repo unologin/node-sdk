@@ -35,9 +35,6 @@ import {
 
 import KeyManager from './key-manager';
 
-/** @deprecated alias for {@link LoginCookie} */
-export type Cookie = LoginCookie;
-
 /** @hidden @internal */
 export const keyManager = new KeyManager(module.exports);
 
@@ -50,7 +47,7 @@ export const rest = new UnologinRestApi(module.exports);
 /** @module express */
 export const express = new ExpressHandlers(module.exports);
 
-/** @deprecated alias for {@link UserToken} */
+/** @deprecated alias for {@link types.UserToken} */
 export type User = UserToken;
 
 /** Defines unolog·in API and frontend URls */
@@ -101,6 +98,12 @@ export interface Options
    * @returns SuperAgentRequest
    */
   agent: (method: string, location: string) => SuperAgentRequest;
+
+  /**
+   * Disable secure cookies.
+   * Will only take effect if ```process.env.NODE_ENV === 'development'```. 
+   */
+  disableSecureCookies?: boolean;
 }
 
 
@@ -318,7 +321,7 @@ export async function verifyLoginToken(
 export async function verifyTokenAndRefresh(
   token: string,
   forceRefresh: boolean = false,
-) : Promise<[UserToken, Cookie | null]>
+) : Promise<[UserToken, LoginCookie | null]>
 {
   const key = await keyManager.getLoginTokenKey();
 
@@ -347,7 +350,7 @@ export async function verifyTokenAndRefresh(
       )
     )
     {
-      return await request<[UserToken, Cookie]>(
+      return await request<[UserToken, LoginCookie]>(
         'POST',
         '/users/refresh',
         {

@@ -67,29 +67,75 @@ export default class ExpressHandlers
     this.getUserToken = this.getUserToken.bind(this);
   }
 
+
+  /**
+   * 
+   * Middleware to parse login information.
+   * 
+   * Will let any request pass where the user is not logged in.
+   * 
+   * @see {requireLogin} for making sure only authenticated requests get past.
+   * 
+   * @param req request
+   * @param res response
+   * @param next optional next function
+   * @returns Promise<UserToken | null>
+   */
+  public async parseLogin(
+    req : Request,
+    res : Response,
+    next : NextFunction,
+  ) : Promise<void>
+  {
+    res.locals.unologin ||= { };
+    res.locals.unologin.parseLoginCalled = true;
+
+    try 
+    {
+      const userToken = await this.getUserTokenOptional(
+        req, 
+        res,
+      );
+
+      res.locals.unologin.user = userToken;
+
+      next();
+    }
+    catch (e)
+    {
+      if (
+        !(e instanceof APIError) || 
+        !(e.isAuthError())
+      )
+      {
+        next(e);
+      }
+    }
+  }
+
   /**
    * Logs out a user and calls next()
    * 
-   * @param _ req 
+   * @param req req 
    * @param res res
    * @param next next
    * @returns Promise<void>
    */
    public logoutHandler = async (
-     _ : Request, 
+     req : Request, 
      res : Response, 
      next?: NextFunction,
    ) => 
    {
-     this.resetLoginCookies(res);
+     this.resetLoginCookies(req, res);
   
      next?.();
    };
 
   /**
-   * Express wrapper for {@link HttpHandlers.handleLoginEvent}.
+   * Express wrapper for {@link http-handlers.HttpHandlers.handleLoginEvent}.
    * 
-   * @see {@link HttpHandlers.handleLoginEvent}
+   * @see {@link http-handlers.HttpHandlers.handleLoginEvent}
    * 
    * @param req req
    * @param res res
@@ -107,6 +153,7 @@ export default class ExpressHandlers
   
   /**
    * Implements cookie setting for Express.
+   * @param _ req (not used)
    * @param res res
    * @param name name
    * @param value value
@@ -114,6 +161,7 @@ export default class ExpressHandlers
    * @returns void
    */
   setCookie(
+    _ : Request,
     res : Response,
     name : string,
     value : string,
@@ -133,14 +181,32 @@ export default class ExpressHandlers
    * 
    * Returns null if not logged in.
    * 
-   * Will only return the token if preceded by {@link parseLogin} or in {@link onLoginSuccess}. Will return ```null``` otherwise.
+   * Will only return the token if preceded by {@link parseLogin} or in {@link onLoginSuccess}.  
+   * Will return ```null``` otherwise.
+   * 
+   * Use {@link getUserToken} for an authenticated async version.
    * 
    * @param res Express Response object
    * @returns {UserToken | null} token 
    */
-  getUserToken(res : Response) : UserToken | null
+  getUserTokenSync(res : Response) : UserToken | null
   {
-    return res.locals.unologin?.user || null;
+    const cached = super.getCachedUserToken(res);
+
+    if (cached)
+    {
+      return cached;
+    }
+    else if (res.locals.parseLoginCalled)
+    {
+      throw new Error(
+        'Cannot use getUserTokenSync/requireLogin without parseLogin.',
+      );
+    }
+    else 
+    {
+      return null;
+    }
   }
 
   /**
@@ -149,7 +215,7 @@ export default class ExpressHandlers
    * 
    * Will trigger the {@link AuthErrorHandler} otherwise. 
    * 
-   * Requires the {@link parseLogin} middleware mounted before it.
+   * *Must* be preceded by the {@link parseLogin} middleware.
    * 
    * @see {@link onAuthError} to configure the error behavior.
    * 
@@ -163,7 +229,7 @@ export default class ExpressHandlers
    */
   public readonly requireLogin : Handler = async (req, res, next) => 
   {
-    if (this.getUserToken(res))
+    if (this.getUserTokenSync(res))
     {
       next();
     }

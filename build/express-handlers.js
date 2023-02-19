@@ -39,19 +39,19 @@ class ExpressHandlers extends http_handlers_1.default {
         /**
          * Logs out a user and calls next()
          *
-         * @param _ req
+         * @param req req
          * @param res res
          * @param next next
          * @returns Promise<void>
          */
-        this.logoutHandler = (_, res, next) => __awaiter(this, void 0, void 0, function* () {
-            this.resetLoginCookies(res);
+        this.logoutHandler = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            this.resetLoginCookies(req, res);
             next === null || next === void 0 ? void 0 : next();
         });
         /**
-         * Express wrapper for {@link HttpHandlers.handleLoginEvent}.
+         * Express wrapper for {@link http-handlers.HttpHandlers.handleLoginEvent}.
          *
-         * @see {@link HttpHandlers.handleLoginEvent}
+         * @see {@link http-handlers.HttpHandlers.handleLoginEvent}
          *
          * @param req req
          * @param res res
@@ -69,7 +69,7 @@ class ExpressHandlers extends http_handlers_1.default {
          *
          * Will trigger the {@link AuthErrorHandler} otherwise.
          *
-         * Requires the {@link parseLogin} middleware mounted before it.
+         * *Must* be preceded by the {@link parseLogin} middleware.
          *
          * @see {@link onAuthError} to configure the error behavior.
          *
@@ -82,7 +82,7 @@ class ExpressHandlers extends http_handlers_1.default {
          * @returns Promise<void>
          */
         this.requireLogin = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
-            if (this.getUserToken(res)) {
+            if (this.getUserTokenSync(res)) {
                 next();
             }
             else {
@@ -101,14 +101,46 @@ class ExpressHandlers extends http_handlers_1.default {
         this.getUserToken = this.getUserToken.bind(this);
     }
     /**
+     *
+     * Middleware to parse login information.
+     *
+     * Will let any request pass where the user is not logged in.
+     *
+     * @see {requireLogin} for making sure only authenticated requests get past.
+     *
+     * @param req request
+     * @param res response
+     * @param next optional next function
+     * @returns Promise<UserToken | null>
+     */
+    parseLogin(req, res, next) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            (_a = res.locals).unologin || (_a.unologin = {});
+            res.locals.unologin.parseLoginCalled = true;
+            try {
+                const userToken = yield this.getUserTokenOptional(req, res);
+                res.locals.unologin.user = userToken;
+                next();
+            }
+            catch (e) {
+                if (!(e instanceof errors_1.APIError) ||
+                    !(e.isAuthError())) {
+                    next(e);
+                }
+            }
+        });
+    }
+    /**
      * Implements cookie setting for Express.
+     * @param _ req (not used)
      * @param res res
      * @param name name
      * @param value value
      * @param options options
      * @returns void
      */
-    setCookie(res, name, value, options) {
+    setCookie(_, res, name, value, options) {
         res.cookie(name, value, options);
     }
     /**
@@ -116,14 +148,25 @@ class ExpressHandlers extends http_handlers_1.default {
      *
      * Returns null if not logged in.
      *
-     * Will only return the token if preceded by {@link parseLogin} or in {@link onLoginSuccess}. Will return ```null``` otherwise.
+     * Will only return the token if preceded by {@link parseLogin} or in {@link onLoginSuccess}.
+     * Will return ```null``` otherwise.
+     *
+     * Use {@link getUserToken} for an authenticated async version.
      *
      * @param res Express Response object
      * @returns {UserToken | null} token
      */
-    getUserToken(res) {
-        var _a;
-        return ((_a = res.locals.unologin) === null || _a === void 0 ? void 0 : _a.user) || null;
+    getUserTokenSync(res) {
+        const cached = super.getCachedUserToken(res);
+        if (cached) {
+            return cached;
+        }
+        else if (res.locals.parseLoginCalled) {
+            throw new Error('Cannot use getUserTokenSync/requireLogin without parseLogin.');
+        }
+        else {
+            return null;
+        }
     }
 }
 exports.default = ExpressHandlers;

@@ -6,10 +6,14 @@
  * @module rest
  */
 
+import {
+  APIError,
+} from './errors';
+
 import type {
-  UserToken,
   UserDocument,
   IUnologinClient,
+  UserHandle,
 } from './types';
 
 export type GetResponse<T> = 
@@ -22,6 +26,45 @@ export type GetCursorBatch<T> =
 {
   results: T[];
   continuationToken: Partial<T> | null;
+}
+
+/**
+ * Validates that the provided UserHandle is complete and can be used to query users.
+ * Passing an invalid user handle may lead to empty queries, leading to undefined behavior.
+ * @param handle {@link types.UserHandle}
+ * @returns handle {@link types.UserHandle} if valid
+ * @throws TypeError
+ */
+export function validateUserHandleSchema(
+  handle : UserHandle,
+)
+{
+  if (
+    ('appLoginToken' in handle && (typeof handle.appLoginToken) === 'string') ||
+    ('asuId' in handle && (typeof handle.asuId) === 'string')
+  )
+  {
+    return handle;
+  }
+  else 
+  {
+    throw new TypeError(
+      'Invalid user handle: \n' + JSON.stringify(handle, null, 2),
+    );
+  }
+}
+
+/**
+ * Validates user handle and converts it into URLSearchParams.
+ * 
+ * @param handle {@link types.UserHandle}
+ * @returns URLSearchParams for the user handle.
+ */
+export function userHandleToQuery(
+  handle : UserHandle,
+)
+{
+  return new URLSearchParams(validateUserHandleSchema(handle));
 }
 
 /**
@@ -174,14 +217,25 @@ export class UnologinRestApi
 
   /**
    * Get a specific user document.
-   * @param user user token
+   * @param handle {@link types.UserHandle}
    * @returns user document
    */
-  getUserDocument({ asuId } : Pick<UserToken, 'asuId'>)
+  async getUserDocument(
+    handle : UserHandle,
+  ) : Promise<UserDocument>
   {
-    return this.client.request(
+    const { results } = await this.client.request<GetResponse<UserDocument>>(
       'GET',
-      this.getAppUrl() + '/users/' + asuId,
+      this.getAppUrl() + '/users/?' + userHandleToQuery(handle),
     );
+
+    if (results.length > 0)
+    {
+      return results[0];
+    }
+    else 
+    {
+      throw new APIError(404, 'User not found.', { handle });
+    }
   }
 }

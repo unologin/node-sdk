@@ -31,7 +31,7 @@ const {
   requireLogin,
   loginEventHandler, 
   logoutHandler,
-  getUserToken,
+  getUserTokenSync,
 } = unologin.express;
 
 mock('mock-api.unolog.in', { router: mockApi });
@@ -85,7 +85,7 @@ app.post('/logout', logoutHandler);
 
 app.all('*', (req, res) => 
 {
-  res.send({ user: getUserToken(res) });
+  res.send({ user: getUserTokenSync(res) });
 });
 
 // eslint-disable-next-line

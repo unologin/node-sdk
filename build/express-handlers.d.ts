@@ -25,18 +25,32 @@ export default class ExpressHandlers extends HttpHandlers {
      */
     constructor(client: IUnologinClient);
     /**
+     *
+     * Middleware to parse login information.
+     *
+     * Will let any request pass where the user is not logged in.
+     *
+     * @see {requireLogin} for making sure only authenticated requests get past.
+     *
+     * @param req request
+     * @param res response
+     * @param next optional next function
+     * @returns Promise<UserToken | null>
+     */
+    parseLogin(req: Request, res: Response, next: NextFunction): Promise<void>;
+    /**
      * Logs out a user and calls next()
      *
-     * @param _ req
+     * @param req req
      * @param res res
      * @param next next
      * @returns Promise<void>
      */
-    logoutHandler: (_: Request, res: Response, next?: NextFunction) => Promise<void>;
+    logoutHandler: (req: Request, res: Response, next?: NextFunction) => Promise<void>;
     /**
-     * Express wrapper for {@link HttpHandlers.handleLoginEvent}.
+     * Express wrapper for {@link http-handlers.HttpHandlers.handleLoginEvent}.
      *
-     * @see {@link HttpHandlers.handleLoginEvent}
+     * @see {@link http-handlers.HttpHandlers.handleLoginEvent}
      *
      * @param req req
      * @param res res
@@ -46,31 +60,35 @@ export default class ExpressHandlers extends HttpHandlers {
     readonly loginEventHandler: Handler;
     /**
      * Implements cookie setting for Express.
+     * @param _ req (not used)
      * @param res res
      * @param name name
      * @param value value
      * @param options options
      * @returns void
      */
-    setCookie(res: Response, name: string, value: string, options: CookieOptions): void;
+    setCookie(_: Request, res: Response, name: string, value: string, options: CookieOptions): void;
     /**
      * Extracts the UserToken from res.locals.unologin.
      *
      * Returns null if not logged in.
      *
-     * Will only return the token if preceded by {@link parseLogin} or in {@link onLoginSuccess}. Will return ```null``` otherwise.
+     * Will only return the token if preceded by {@link parseLogin} or in {@link onLoginSuccess}.
+     * Will return ```null``` otherwise.
+     *
+     * Use {@link getUserToken} for an authenticated async version.
      *
      * @param res Express Response object
      * @returns {UserToken | null} token
      */
-    getUserToken(res: Response): UserToken | null;
+    getUserTokenSync(res: Response): UserToken | null;
     /**
      *
      * Only executes the next handler if the user is logged in.
      *
      * Will trigger the {@link AuthErrorHandler} otherwise.
      *
-     * Requires the {@link parseLogin} middleware mounted before it.
+     * *Must* be preceded by the {@link parseLogin} middleware.
      *
      * @see {@link onAuthError} to configure the error behavior.
      *

@@ -4,6 +4,13 @@
  * @module types
  *
  */
+/**
+ * Parsed payload of the login token.
+ *
+ * @see {@link http-handlers.HttpHandlers.getUserToken}
+ *
+ * @see {@link http-handlers.HttpHandlers.getUserTokenOptional}
+ */
 export type UserToken = {
     /** your appId */
     appId: string;
@@ -14,6 +21,27 @@ export type UserToken = {
     iat: number;
     /** refresh-at timestamp */
     r?: number;
+};
+/**
+ * User handle can be used by many API calls that relate to a specific user.
+ *
+ * If the user handle does not contain an ```asuId```, it is inferred by verifying the login token.
+ *
+ * This avoids having to make multiple requests to obtain user information.
+ *
+ * **IMPORTANT**: Generally, a user handle may be set by the requester and should
+ * not be trusted until verified.
+ *
+ * Passing an unverified UserHandle to any API call will automatically attempt to verify it and
+ * raise an authentication error if invalid.
+ *
+ * @see {@link UserToken} for an authenticated UserHandle.
+ *
+ */
+export type UserHandle = {
+    asuId: string;
+} | {
+    appLoginToken: string;
 };
 export type UserDocument<RequiredFields extends string = never> = {
     _id: string;

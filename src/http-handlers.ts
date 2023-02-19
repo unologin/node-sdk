@@ -1,7 +1,10 @@
+/**
+ * @module http-handlers
+ * 
+ */
 
 import type {
   CookieOptions,
-  NextFunction,
   Request as ExpressRequest,
   Response as ExpressResponse,
 } from 'express';
@@ -18,11 +21,12 @@ import {
 import {
   IUnologinClient,
   LoginCookie,
+  UserHandle,
   UserToken,
 } from './types';
 
-type Request = ExpressRequest | NextApiRequest;
-type Response = ExpressResponse | NextApiResponse;
+export type Request = ExpressRequest | NextApiRequest;
+export type Response = ExpressResponse | NextApiResponse;
 
 // not using "next" on auth errors because the request MUST be blocked
 export type AuthErrorHandler = (
@@ -38,13 +42,18 @@ export type LoginSuccessHandler = (
 ) => unknown | Promise<unknown>;
 
 /**
- * HTTP handlers for ExpressJS and NextJS.
+ * Low-level HTTP request handlers and utility functions
+ * that can be used by Express, Next, or other server frameworks.
+ * 
  */
-export default abstract class HttpHandlers
+export abstract class HttpHandlers
 {
   protected loginSuccessHandler : LoginSuccessHandler | null = null;
 
   /**
+   * Executed when encountering an authentication error.
+   * 
+   * @see {@link errors.APIError.isAuthError}
    * 
    * @param req req
    * @param res res
@@ -53,14 +62,11 @@ export default abstract class HttpHandlers
    */
   protected authErrorHandler : AuthErrorHandler = (req, res, error) =>
   {
-    this.resetLoginCookies(res);
+    this.resetLoginCookies(req, res);
   
     res.status(401);
     res.send('Auth error: ' + error.message || 'unknown error');
   };
-  
-  /** Should cookies use the "secure" attribute? */
-  private useSecureCookies = true;
   
   /** List of cookies used and their default options. */
   private cookies =
@@ -91,22 +97,28 @@ export default abstract class HttpHandlers
   constructor(public readonly client : IUnologinClient) {}
 
   /**
-   * Completes cookie options
+   * Completes cookie options.
    * @param opts cookie options
    * @returns default cookie options
    */
   completeCookieOptions(opts : CookieOptions) : CookieOptions
   {
+    const {
+      cookiesDomain,
+      disableSecureCookies,
+      cookieSameSite,
+    } = this.client.getOptions();
+
     const cookie : CookieOptions =
     {
       ...opts,
-      domain: this.client.getOptions().cookiesDomain,
+      domain: cookiesDomain,
       // always use secure cookies if not in dev environment
       // this is redundant as debug_useSecureCookies will be ignored but it won't hurt
-      secure: this.useSecureCookies || (process.env.NODE_ENV !== 'development'),
+      secure: !disableSecureCookies || (process.env.NODE_ENV !== 'development'),
 
       // [!] TODO: (UN-72) using 'none' is a temporary fix for the behavior of omitting sameSite on chrome
-      sameSite: this.client.getOptions().cookieSameSite || 'none',
+      sameSite: cookieSameSite || 'none',
     };
 
     if (cookie.maxAge === undefined)
@@ -116,10 +128,169 @@ export default abstract class HttpHandlers
 
     return cookie;
   }
+  
+  /**
+   * Result of {@link parseLogin} may be stored in with the response object.
+   * 
+   * This function acts as a helper to retrieve the cached value.
+   * 
+   * This function is meant to be used in conjunction with Express-like frameworks
+   * where one middleware function is called after another, 
+   * passing values using ```res.locals```.
+   * 
+   * @internal
+   * 
+   * @param res res
+   * @returns parsed user token cached in ```res.locals```
+   */
+  protected getCachedUserToken(res : Response) : UserToken | null
+  {
+    return (res as ExpressResponse).locals?.unologin?.user || null;
+  }
+
+  /**
+   * Returns a {@link types.UserHandle} from the current request.
+   * Returns ```null``` if the request contains no login information.
+   * 
+   * **IMPORTANT**:
+   * 
+   * This function is synchronous and the UserHandle can 
+   * therefore not be trusted to be authenticated.
+   * 
+   * The returned UserHandle **can** however be used in any API call that accepts a UserHandle
+   * as a parameter.
+   * 
+   * In this case, the authentication happens on the unologin API.
+   * 
+   * Use {@link getUserTokenOptional} for optional authentication.
+   * Use {@link getUserToken} for required authentication.
+   * 
+   * @param req req
+   * @param res res
+   * @returns UserHandle | null
+   */
+  public getUserHandleNoAuth(req : Request, res : Response) : UserHandle | null
+  {
+    const cachedUser = this.getCachedUserToken(res);
+
+    if (cachedUser)
+    {
+      return cachedUser;
+    }
+    else 
+    {
+      const appLoginToken = req.cookies[this.cookies.login.name];
+
+      if (appLoginToken)
+      {
+        return { appLoginToken };
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Authenticates the user and returns a Promise to the {@link types.UserToken}.
+   * 
+   * Requires the user to be logged in.
+   * 
+   * The resolved {@link types.UserToken} is authenticated and *can be trusted*.
+   * 
+   * @see {@link parseLogin} for optional authentication.
+   * 
+   * @throws {@link errors.APIError} 403 unauthorized if not logged in.
+   * @throws {@link errors.APIError} 403 unauthorized if login token invalid.
+   * 
+   * @param req req
+   * @param res res
+   * 
+   * @returns Promise<UserToken>
+   */
+  public async getUserToken(
+    req : Request, 
+    res : Response,
+  ) : Promise<UserToken>
+  {
+    const userToken = await this.getUserTokenOptional(req, res);
+
+    if (userToken)
+    {
+      return userToken;
+    }
+    else 
+    {
+      throw new APIError(
+        401,
+        'Login required.',
+        { param: 'user'},
+      );
+    }
+  }
+
+  /**
+   * Authenticates the user and returns a Promise to the {@link types.UserToken}.
+   * 
+   * Does not require the user to be logged in. 
+   * Does nothing if no login cookie is present and returns null.
+   * 
+   * The resolved {@link types.UserToken} is authenticated and *can be trusted* if not null.
+   * 
+   * Requires a cookie parser.
+   * 
+   * @see {@link getUserToken} for required authentication.
+   * 
+   * @param req req
+   * @param res res
+   * @returns Promise<UserToken>
+   */
+  public async getUserTokenOptional(req : Request, res : Response)
+  {
+    const token = req.cookies?.[this.cookies.login.name];
+  
+    const cached = this.getCachedUserToken(res);
+  
+    if (cached)
+    {
+      return cached;
+    }
+  
+    // only try to parse the token if the user provides one
+    if (token)
+    {
+      try
+      {
+        const [user, cookie] = await this.client.verifyTokenAndRefresh(token);
+        
+        // cookie needs to be refreshed
+        if (cookie)
+        {
+          this.setLoginCookies(req, res, cookie);
+        }
+  
+        return user;
+      }
+      catch (e)
+      {
+        if (
+          e instanceof APIError && e.isAuthError?.()
+        )
+        {
+          await this.authErrorHandler(req, res, e);
+        }
+
+        throw e;
+      }
+    }
+
+    return null;
+  }
 
   
   /**
    * Decide what to do on auth error. 
+   * 
+   * @see {authErrorHandler}
    * 
    * @param handler Express handler
    * @returns void
@@ -133,12 +304,13 @@ export default abstract class HttpHandlers
 
 
   /**
-   * Add a hook that is called after the login event has finished but before the response is sent to the client. 
+   * Add a callback that is called after the login event has 
+   * finished but before the response is sent to the client. 
    * 
+   * The {@link types.UserToken} passed to ```handler```
+   * is authenticated an *can be trusted*.
    * 
-   * {@link getUserToken}(res) will be available regardless of {@link parseLogin}.
-   * 
-   * @param handler Express handler, may be asynchronous
+   * @param handler (req, res, userToken) => unknown
    * @returns void
    */
   public onLoginSuccess(
@@ -148,7 +320,19 @@ export default abstract class HttpHandlers
     this.loginSuccessHandler = handler;
   }
 
-  abstract setCookie(
+  /**
+   * Framework specific implementation required. 
+   * 
+   * @internal
+   * 
+   * @param req req
+   * @param res res
+   * @param name name
+   * @param value value
+   * @param options cookie options
+   */
+  protected abstract setCookie(
+    req : Request,
     res : Response,
     name : string,
     value : string,
@@ -156,20 +340,26 @@ export default abstract class HttpHandlers
   ) : void;
 
   /**
+   * Set the login cookies for a response.
    * 
+   * @internal
+   * 
+   * @param req req
    * @param res rest
+   * 
    * @param cookie cookie to set
    * @param options cookie options
    * @returns void
    */
-  setLoginCookies(
+  protected setLoginCookies(
+    req : Request,
     res : Response,
     cookie : LoginCookie,
     options : CookieOptions = {},
   ) 
   {
     this.setCookie(
-      res,
+      req, res,
       this.cookies.login.name,
       cookie.value,
       {
@@ -180,7 +370,7 @@ export default abstract class HttpHandlers
     );
 
     this.setCookie(
-      res,
+      req, res,
       this.cookies.loginState.name,
       'success',
       {
@@ -193,99 +383,30 @@ export default abstract class HttpHandlers
 
   /**
    * Resets/deletes login cookies.
+   * 
+   * @param req req
    * @param res res
    * @returns void
    */
-  resetLoginCookies(res : Response) : void
+  protected resetLoginCookies(req : Request, res : Response) : void
   {
     // reset the cookie by immediately expiring it
     this.setLoginCookies(
-      res,
+      req, res,
       // maxAge: 0 has shown weird behavior
       { value: 'deleted', maxAge: 1 },
     );
   }
 
   /**
-   * Populates {@link getUserToken} with the user token if the user is logged in.
-   * Does nothing if no login cookie is present.
-   * Requires a cookie parser.
+   * Handles the unologin login event. 
+   * Returns a URL to redirect the user to.
    * 
-   * TODO: Move express-logic to express-handlers!
-   * 
-   * @param req request
-   * @param res response
-   * @param next optional next function
-   * @returns Promise<UserToken>
-   */
-  public async parseLogin<Next extends NextFunction | undefined>(
-    req : Request,
-    res : Response,
-    next?: Next,
-  ) : Promise<UserToken | null>
-  {
-    const token = req.cookies?.[this.cookies.login.name];
-
-    if (next)
-    {
-      (res as unknown as ExpressResponse).locals.unologin ||= {};
-    }
-
-    // only try to parse the token if the user provides one
-    if (token)
-    {
-      try
-      {
-        const [user, cookie] = await this.client.verifyTokenAndRefresh(token);
-        
-        // cookie has been refreshed
-        if (cookie)
-        {
-          this.setLoginCookies(res, cookie);
-        }
-
-        if (next)
-        {
-          (res as unknown as ExpressResponse).locals.unologin.user = user;
-          next();
-        }
-
-        return user;
-      }
-      catch (e)
-      {
-        if (
-          e instanceof APIError && e.isAuthError?.()
-        )
-        {
-          await this.authErrorHandler(req, res, e);
-        }
-
-        if (next)
-        {
-          return null;
-        }
-        else 
-        {
-          throw e;
-        }
-      }
-    }
-
-    next?.();
-
-    return null;
-  }
-
-  /**
-   * 
-   * Populates {@link getUserToken} with the user token if the user is logged in.
-   * Does nothing if no login cookie is present.
-   * Requires a cookie parser.
+   * @internal
    * 
    * @param req req
    * @param res res
-   * @returns url to redirect the user to
+   * @returns Promise<URL> to redirect the user to
    */
   async handleLoginEvent(req : Request, res : Response)
   {
@@ -306,7 +427,7 @@ export default abstract class HttpHandlers
 
       await this.loginSuccessHandler?.(req, res, userToken);
 
-      cookie && this.setLoginCookies(res, cookie);
+      cookie && this.setLoginCookies(req, res, cookie);
     }
     catch (e)
     {
@@ -325,8 +446,8 @@ export default abstract class HttpHandlers
 
     // construct a url for the unologin front end to consume the result
     const url = new URL(
-      decodeURIComponent(req.query.origin as string) || 
-    this.client.getOptions().realm.frontendUrl,
+      req.query.origin && decodeURIComponent(req.query.origin as string) || 
+      this.client.getOptions().realm.frontendUrl,
     );
 
     url.searchParams.set('loginHandlerSuccess', msg ? 'false' : 'true');
@@ -339,3 +460,5 @@ export default abstract class HttpHandlers
     };
   }
 }
+
+export default HttpHandlers;

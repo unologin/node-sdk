@@ -5,7 +5,7 @@
  *
  * @module rest
  */
-import type { UserToken, UserDocument, IUnologinClient } from './types';
+import type { UserDocument, IUnologinClient, UserHandle } from './types';
 export type GetResponse<T> = {
     results: T[];
     total: number;
@@ -14,6 +14,21 @@ export type GetCursorBatch<T> = {
     results: T[];
     continuationToken: Partial<T> | null;
 };
+/**
+ * Validates that the provided UserHandle is complete and can be used to query users.
+ * Passing an invalid user handle may lead to empty queries, leading to undefined behavior.
+ * @param handle {@link types.UserHandle}
+ * @returns handle {@link types.UserHandle} if valid
+ * @throws TypeError
+ */
+export declare function validateUserHandleSchema(handle: UserHandle): UserHandle;
+/**
+ * Validates user handle and converts it into URLSearchParams.
+ *
+ * @param handle {@link types.UserHandle}
+ * @returns URLSearchParams for the user handle.
+ */
+export declare function userHandleToQuery(handle: UserHandle): URLSearchParams;
 /**
  * Wrapper around a REST GET request
  */
@@ -66,8 +81,8 @@ export declare class UnologinRestApi {
     getUserDocuments(query?: URLSearchParams | object): GetCursor<UserDocument>;
     /**
      * Get a specific user document.
-     * @param user user token
+     * @param handle {@link types.UserHandle}
      * @returns user document
      */
-    getUserDocument({ asuId }: Pick<UserToken, 'asuId'>): Promise<unknown>;
+    getUserDocument(handle: UserHandle): Promise<UserDocument>;
 }

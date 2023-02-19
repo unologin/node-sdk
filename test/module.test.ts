@@ -48,7 +48,10 @@ test('exported REST API', async () =>
     unologin,
     'request',
   ).mockResolvedValue(
-    { foo: 'bar' },
+    {
+      results: [{ foo: 'bar' }],
+      total: 1,
+    },
   );
 
   jest.spyOn(
