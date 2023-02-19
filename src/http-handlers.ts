@@ -130,7 +130,7 @@ export abstract class HttpHandlers
   }
   
   /**
-   * Result of {@link getLoginTokenOptional} may be stored in with the response object.
+   * Result of {@link getUserTokenOptional} may be stored in with the response object.
    * 
    * This function acts as a helper to retrieve the cached value.
    * 
@@ -307,7 +307,7 @@ export abstract class HttpHandlers
         }
 
         this.setCachedUserToken(res, null);
-        
+
         throw e;
       }
     }

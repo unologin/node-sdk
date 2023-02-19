@@ -42,7 +42,7 @@ export declare abstract class HttpHandlers {
      */
     completeCookieOptions(opts: CookieOptions): CookieOptions;
     /**
-     * Result of {@link getLoginTokenOptional} may be stored in with the response object.
+     * Result of {@link getUserTokenOptional} may be stored in with the response object.
      *
      * This function acts as a helper to retrieve the cached value.
      *
