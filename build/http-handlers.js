@@ -79,7 +79,7 @@ class HttpHandlers {
         return cookie;
     }
     /**
-     * Result of {@link parseLogin} may be stored in with the response object.
+     * Result of {@link getLoginTokenOptional} may be stored in with the response object.
      *
      * This function acts as a helper to retrieve the cached value.
      *
@@ -89,12 +89,30 @@ class HttpHandlers {
      *
      * @internal
      *
+     * @see {@link setCachedUserToken}
+     *
      * @param res res
      * @returns parsed user token cached in ```res.locals```
      */
     getCachedUserToken(res) {
         var _a, _b;
         return ((_b = (_a = res.locals) === null || _a === void 0 ? void 0 : _a.unologin) === null || _b === void 0 ? void 0 : _b.user) || null;
+    }
+    /**
+     *
+     * @see {@link getCachedUserToken}
+     * @param res res
+     * @param userToken token or null
+     *
+     * @returns void
+     */
+    setCachedUserToken(res, userToken) {
+        var _a;
+        (_a = res).locals || (_a.locals = {});
+        const locals = res.locals;
+        locals.unologin || (locals.unologin = {});
+        locals.unologin.user = userToken;
+        locals.unologin.parseLoginCalled = true;
     }
     /**
      * Returns a {@link types.UserHandle} from the current request.
@@ -137,7 +155,7 @@ class HttpHandlers {
      *
      * The resolved {@link types.UserToken} is authenticated and *can be trusted*.
      *
-     * @see {@link parseLogin} for optional authentication.
+     * @see {@link getUserTokenOptional} for optional authentication.
      *
      * @throws {@link errors.APIError} 403 unauthorized if not logged in.
      * @throws {@link errors.APIError} 403 unauthorized if login token invalid.
@@ -177,11 +195,11 @@ class HttpHandlers {
     getUserTokenOptional(req, res) {
         var _a, _b;
         return __awaiter(this, void 0, void 0, function* () {
-            const token = (_a = req.cookies) === null || _a === void 0 ? void 0 : _a[this.cookies.login.name];
             const cached = this.getCachedUserToken(res);
             if (cached) {
                 return cached;
             }
+            const token = (_a = req.cookies) === null || _a === void 0 ? void 0 : _a[this.cookies.login.name];
             // only try to parse the token if the user provides one
             if (token) {
                 try {
@@ -190,15 +208,18 @@ class HttpHandlers {
                     if (cookie) {
                         this.setLoginCookies(req, res, cookie);
                     }
+                    this.setCachedUserToken(res, user);
                     return user;
                 }
                 catch (e) {
                     if (e instanceof errors_1.APIError && ((_b = e.isAuthError) === null || _b === void 0 ? void 0 : _b.call(e))) {
                         yield this.authErrorHandler(req, res, e);
                     }
+                    this.setCachedUserToken(res, null);
                     throw e;
                 }
             }
+            this.setCachedUserToken(res, null);
             return null;
         });
     }

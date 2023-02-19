@@ -114,13 +114,10 @@ class ExpressHandlers extends http_handlers_1.default {
      * @returns Promise<UserToken | null>
      */
     parseLogin(req, res, next) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
-            (_a = res.locals).unologin || (_a.unologin = {});
-            res.locals.unologin.parseLoginCalled = true;
             try {
-                const userToken = yield this.getUserTokenOptional(req, res);
-                res.locals.unologin.user = userToken;
+                // will throw if invalid
+                yield this.getUserTokenOptional(req, res);
                 next();
             }
             catch (e) {
@@ -144,7 +141,8 @@ class ExpressHandlers extends http_handlers_1.default {
         res.cookie(name, value, options);
     }
     /**
-     * Extracts the UserToken from res.locals.unologin.
+     * Extracts the cached UserToken from previous call to
+     * {@link getUserTokenOptional} or {@link getUserToken}
      *
      * Returns null if not logged in.
      *
@@ -157,11 +155,12 @@ class ExpressHandlers extends http_handlers_1.default {
      * @returns {UserToken | null} token
      */
     getUserTokenSync(res) {
+        var _a;
         const cached = super.getCachedUserToken(res);
         if (cached) {
             return cached;
         }
-        else if (res.locals.parseLoginCalled) {
+        else if (!((_a = res.locals.unologin) === null || _a === void 0 ? void 0 : _a.parseLoginCalled)) {
             throw new Error('Cannot use getUserTokenSync/requireLogin without parseLogin.');
         }
         else {

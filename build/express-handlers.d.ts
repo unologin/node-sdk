@@ -69,7 +69,8 @@ export default class ExpressHandlers extends HttpHandlers {
      */
     setCookie(_: Request, res: Response, name: string, value: string, options: CookieOptions): void;
     /**
-     * Extracts the UserToken from res.locals.unologin.
+     * Extracts the cached UserToken from previous call to
+     * {@link getUserTokenOptional} or {@link getUserToken}
      *
      * Returns null if not logged in.
      *

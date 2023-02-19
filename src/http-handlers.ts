@@ -130,7 +130,7 @@ export abstract class HttpHandlers
   }
   
   /**
-   * Result of {@link parseLogin} may be stored in with the response object.
+   * Result of {@link getLoginTokenOptional} may be stored in with the response object.
    * 
    * This function acts as a helper to retrieve the cached value.
    * 
@@ -140,12 +140,37 @@ export abstract class HttpHandlers
    * 
    * @internal
    * 
+   * @see {@link setCachedUserToken}
+   * 
    * @param res res
    * @returns parsed user token cached in ```res.locals```
    */
   protected getCachedUserToken(res : Response) : UserToken | null
   {
     return (res as ExpressResponse).locals?.unologin?.user || null;
+  }
+
+  /**
+   * 
+   * @see {@link getCachedUserToken}
+   * @param res res
+   * @param userToken token or null
+   * 
+   * @returns void
+   */
+  protected setCachedUserToken(
+    res : Response,
+    userToken : UserToken | null,
+  )
+  {
+    (res as any).locals ||= {};
+    const locals = (res as any).locals;
+
+    locals.unologin ||= {};
+
+    locals.unologin.user = userToken;
+
+    locals.unologin.parseLoginCalled = true;
   }
 
   /**
@@ -197,7 +222,7 @@ export abstract class HttpHandlers
    * 
    * The resolved {@link types.UserToken} is authenticated and *can be trusted*.
    * 
-   * @see {@link parseLogin} for optional authentication.
+   * @see {@link getUserTokenOptional} for optional authentication.
    * 
    * @throws {@link errors.APIError} 403 unauthorized if not logged in.
    * @throws {@link errors.APIError} 403 unauthorized if login token invalid.
@@ -246,14 +271,14 @@ export abstract class HttpHandlers
    */
   public async getUserTokenOptional(req : Request, res : Response)
   {
-    const token = req.cookies?.[this.cookies.login.name];
-  
     const cached = this.getCachedUserToken(res);
   
     if (cached)
     {
       return cached;
     }
+
+    const token = req.cookies?.[this.cookies.login.name];
   
     // only try to parse the token if the user provides one
     if (token)
@@ -267,7 +292,9 @@ export abstract class HttpHandlers
         {
           this.setLoginCookies(req, res, cookie);
         }
-  
+        
+        this.setCachedUserToken(res, user);
+
         return user;
       }
       catch (e)
@@ -279,9 +306,13 @@ export abstract class HttpHandlers
           await this.authErrorHandler(req, res, e);
         }
 
+        this.setCachedUserToken(res, null);
+        
         throw e;
       }
     }
+
+    this.setCachedUserToken(res, null);
 
     return null;
   }

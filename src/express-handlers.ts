@@ -87,17 +87,13 @@ export default class ExpressHandlers
     next : NextFunction,
   ) : Promise<void>
   {
-    res.locals.unologin ||= { };
-    res.locals.unologin.parseLoginCalled = true;
-
     try 
     {
-      const userToken = await this.getUserTokenOptional(
+      // will throw if invalid
+      await this.getUserTokenOptional(
         req, 
         res,
       );
-
-      res.locals.unologin.user = userToken;
 
       next();
     }
@@ -177,7 +173,8 @@ export default class ExpressHandlers
 
 
   /**
-   * Extracts the UserToken from res.locals.unologin. 
+   * Extracts the cached UserToken from previous call to 
+   * {@link getUserTokenOptional} or {@link getUserToken}
    * 
    * Returns null if not logged in.
    * 
@@ -197,7 +194,7 @@ export default class ExpressHandlers
     {
       return cached;
     }
-    else if (res.locals.parseLoginCalled)
+    else if (!res.locals.unologin?.parseLoginCalled)
     {
       throw new Error(
         'Cannot use getUserTokenSync/requireLogin without parseLogin.',

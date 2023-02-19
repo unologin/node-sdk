@@ -42,7 +42,7 @@ export declare abstract class HttpHandlers {
      */
     completeCookieOptions(opts: CookieOptions): CookieOptions;
     /**
-     * Result of {@link parseLogin} may be stored in with the response object.
+     * Result of {@link getLoginTokenOptional} may be stored in with the response object.
      *
      * This function acts as a helper to retrieve the cached value.
      *
@@ -52,10 +52,21 @@ export declare abstract class HttpHandlers {
      *
      * @internal
      *
+     * @see {@link setCachedUserToken}
+     *
      * @param res res
      * @returns parsed user token cached in ```res.locals```
      */
     protected getCachedUserToken(res: Response): UserToken | null;
+    /**
+     *
+     * @see {@link getCachedUserToken}
+     * @param res res
+     * @param userToken token or null
+     *
+     * @returns void
+     */
+    protected setCachedUserToken(res: Response, userToken: UserToken | null): void;
     /**
      * Returns a {@link types.UserHandle} from the current request.
      * Returns ```null``` if the request contains no login information.
@@ -85,7 +96,7 @@ export declare abstract class HttpHandlers {
      *
      * The resolved {@link types.UserToken} is authenticated and *can be trusted*.
      *
-     * @see {@link parseLogin} for optional authentication.
+     * @see {@link getUserTokenOptional} for optional authentication.
      *
      * @throws {@link errors.APIError} 403 unauthorized if not logged in.
      * @throws {@link errors.APIError} 403 unauthorized if login token invalid.
