@@ -184,7 +184,7 @@ export function setup(
   }
   catch (e)
   {
-    throw new Error('Malformed API key.');
+    throw new Error('Malformed API key: ' + opts.apiKey);
   }
 }
 

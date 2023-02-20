@@ -99,7 +99,7 @@ function setup(opts) {
         options = Object.assign(Object.assign(Object.assign({}, currentOptions), opts), { appId: token.appId });
     }
     catch (e) {
-        throw new Error('Malformed API key.');
+        throw new Error('Malformed API key: ' + opts.apiKey);
     }
 }
 exports.setup = setup;

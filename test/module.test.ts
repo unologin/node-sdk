@@ -77,7 +77,7 @@ describe('setup', () =>
   it('Throws on invalid API key', ()=> 
   {
     expect(
-      () => unologin.setup({ apiKey: 'invalid' }),
-    ).toThrow('Malformed API key.');
+      () => unologin.setup({ apiKey: 'invalidKeyAbc' }),
+    ).toThrow('Malformed API key: invalidKeyAbc');
   });
 });
