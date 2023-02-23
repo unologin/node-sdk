@@ -57,7 +57,8 @@ export abstract class HttpHandlers<
   Response extends ExpressOrNextResponse = ExpressOrNextResponse
 >
 {
-  protected loginSuccessHandler : LoginSuccessHandler | null = null;
+  protected loginSuccessHandler 
+    : LoginSuccessHandler<Request, Response> | null = null;
 
   /**
    * Executed when encountering an authentication error.
@@ -337,7 +338,7 @@ export abstract class HttpHandlers<
    * @returns void
    */
   public onAuthError(
-    handler: AuthErrorHandler,
+    handler: AuthErrorHandler<Request, Response>,
   ) : void
   {
     this.authErrorHandler = handler;
@@ -355,7 +356,7 @@ export abstract class HttpHandlers<
    * @returns void
    */
   public onLoginSuccess(
-    handler: LoginSuccessHandler,
+    handler: LoginSuccessHandler<Request, Response>,
   ) : void
   {
     this.loginSuccessHandler = handler;

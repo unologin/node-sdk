@@ -17,7 +17,7 @@ export type LoginSuccessHandler<Request extends ExpressOrNextRequest = ExpressOr
  */
 export declare abstract class HttpHandlers<Request extends ExpressOrNextRequest = ExpressOrNextRequest, Response extends ExpressOrNextResponse = ExpressOrNextResponse> {
     readonly client: IUnologinClient;
-    protected loginSuccessHandler: LoginSuccessHandler | null;
+    protected loginSuccessHandler: LoginSuccessHandler<Request, Response> | null;
     /**
      * Executed when encountering an authentication error.
      *
@@ -132,7 +132,7 @@ export declare abstract class HttpHandlers<Request extends ExpressOrNextRequest 
      * @param handler Express handler
      * @returns void
      */
-    onAuthError(handler: AuthErrorHandler): void;
+    onAuthError(handler: AuthErrorHandler<Request, Response>): void;
     /**
      * Add a callback that is called after the login event has
      * finished but before the response is sent to the client.
@@ -143,7 +143,7 @@ export declare abstract class HttpHandlers<Request extends ExpressOrNextRequest 
      * @param handler (req, res, userToken) => unknown
      * @returns void
      */
-    onLoginSuccess(handler: LoginSuccessHandler): void;
+    onLoginSuccess(handler: LoginSuccessHandler<Request, Response>): void;
     /**
      * Framework specific implementation required.
      *
