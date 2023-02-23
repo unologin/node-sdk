@@ -6,16 +6,16 @@ import type { CookieOptions, Request as ExpressRequest, Response as ExpressRespo
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { APIError } from './errors';
 import { IUnologinClient, LoginCookie, UserHandle, UserToken } from './types';
-export type Request = ExpressRequest | NextApiRequest;
-export type Response = ExpressResponse | NextApiResponse;
-export type AuthErrorHandler = (req: Request, res: Response, error: APIError) => unknown | Promise<unknown>;
-export type LoginSuccessHandler = (req: Request, res: Response, user: UserToken) => unknown | Promise<unknown>;
+export type ExpressOrNextRequest = ExpressRequest | NextApiRequest;
+export type ExpressOrNextResponse = ExpressResponse | NextApiResponse;
+export type AuthErrorHandler<Request extends ExpressOrNextRequest = ExpressOrNextRequest, Response extends ExpressOrNextResponse = ExpressOrNextResponse> = (req: Request, res: Response, error: APIError) => unknown | Promise<unknown>;
+export type LoginSuccessHandler<Request extends ExpressOrNextRequest = ExpressOrNextRequest, Response extends ExpressOrNextResponse = ExpressOrNextResponse> = (req: Request, res: Response, user: UserToken) => unknown | Promise<unknown>;
 /**
  * Low-level HTTP request handlers and utility functions
  * that can be used by Express, Next, or other server frameworks.
  *
  */
-export declare abstract class HttpHandlers {
+export declare abstract class HttpHandlers<Request extends ExpressOrNextRequest = ExpressOrNextRequest, Response extends ExpressOrNextResponse = ExpressOrNextResponse> {
     readonly client: IUnologinClient;
     protected loginSuccessHandler: LoginSuccessHandler | null;
     /**
@@ -28,7 +28,7 @@ export declare abstract class HttpHandlers {
      * @param error error
      * @returns void
      */
-    protected authErrorHandler: AuthErrorHandler;
+    protected authErrorHandler: AuthErrorHandler<Request, Response>;
     /** List of cookies used and their default options. */
     private cookies;
     /**

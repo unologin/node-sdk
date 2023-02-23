@@ -29,22 +29,11 @@ import {
 
 import HttpHandlers from './http-handlers';
 
-// not using "next" on auth errors because the request MUST be blocked
-export type AuthErrorHandler = (
-  req : Request,
-  res : Response,
-) => unknown | Promise<unknown>;
-
-export type LoginSuccessHandler = (
-  req : Request,
-  res : Response
-) => unknown | Promise<unknown>;
-
 /**
  * Implements HttpHandlers for Express.
  */
 export default class ExpressHandlers
-  extends HttpHandlers
+  extends HttpHandlers<Request, Response>
 {
   /**
    * 

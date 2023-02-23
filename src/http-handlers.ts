@@ -25,17 +25,23 @@ import {
   UserToken,
 } from './types';
 
-export type Request = ExpressRequest | NextApiRequest;
-export type Response = ExpressResponse | NextApiResponse;
+export type ExpressOrNextRequest = ExpressRequest | NextApiRequest;
+export type ExpressOrNextResponse = ExpressResponse | NextApiResponse;
 
 // not using "next" on auth errors because the request MUST be blocked
-export type AuthErrorHandler = (
+export type AuthErrorHandler<
+Request extends ExpressOrNextRequest = ExpressOrNextRequest,
+Response extends ExpressOrNextResponse = ExpressOrNextResponse
+> = (
   req : Request,
   res : Response,
   error : APIError,
 ) => unknown | Promise<unknown>;
 
-export type LoginSuccessHandler = (
+export type LoginSuccessHandler<
+Request extends ExpressOrNextRequest = ExpressOrNextRequest,
+Response extends ExpressOrNextResponse = ExpressOrNextResponse
+> = (
   req : Request,
   res : Response,
   user : UserToken,
@@ -46,7 +52,10 @@ export type LoginSuccessHandler = (
  * that can be used by Express, Next, or other server frameworks.
  * 
  */
-export abstract class HttpHandlers
+export abstract class HttpHandlers<
+  Request extends ExpressOrNextRequest = ExpressOrNextRequest,
+  Response extends ExpressOrNextResponse = ExpressOrNextResponse
+>
 {
   protected loginSuccessHandler : LoginSuccessHandler | null = null;
 
@@ -60,7 +69,8 @@ export abstract class HttpHandlers
    * @param error error
    * @returns void
    */
-  protected authErrorHandler : AuthErrorHandler = (req, res, error) =>
+  protected authErrorHandler : AuthErrorHandler<Request, Response> = 
+  (req, res, error) =>
   {
     this.resetLoginCookies(req, res);
   

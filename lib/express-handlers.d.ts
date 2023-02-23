@@ -12,12 +12,10 @@
 import { Request, Response, CookieOptions, Handler, NextFunction } from 'express';
 import { IUnologinClient, UserToken } from './types';
 import HttpHandlers from './http-handlers';
-export type AuthErrorHandler = (req: Request, res: Response) => unknown | Promise<unknown>;
-export type LoginSuccessHandler = (req: Request, res: Response) => unknown | Promise<unknown>;
 /**
  * Implements HttpHandlers for Express.
  */
-export default class ExpressHandlers extends HttpHandlers {
+export default class ExpressHandlers extends HttpHandlers<Request, Response> {
     /**
      *
      * @param client client
