@@ -25,16 +25,12 @@ unologin.setup(
 
     // domain(s) on which to set cookies
     cookiesDomain: process.env.UNOLOGIN_COOKIES_DOMAIN,
+    
+    // you can disable secure cookies when testing locally without https
+    useSecureCookies: !process.env.UNOLOGIN_DEBUG_DISABLE_SECURE,
   },
 );
 
-// you can disable secure cookies when testing locally without https
-if (process.env.UNOLOGIN_DEBUG_DISABLE_SECURE === 'true')
-{
-  // unologin will refuse to to this if process.env.NODE_ENV is not development
-  // but you should not rely on that alone. 
-  unologin.express.debug_useSecureCookies(false);
-}
 
 // OPTIONAL: decide what happens if
 // 1. a user is not logged in where requireLogin is active (see below) or

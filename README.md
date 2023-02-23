@@ -1,19 +1,27 @@
-Node.js library for interfacing with [unolog·in](https://unolog.in). Includes [express](https://expressjs.com/)-handlers.
+Node.js library for interfacing with [unolog·in](https://unolog.in). 
 
-The full documentation for this package can be found [here](https://unologin.github.io/node-api/).
+The full documentation for this package can be found [here](https://unologin.github.io/node-sdk/).
+
+This package also includes [express](https://expressjs.com/)-handlers and lower-level HTTP-handlers for other frameworks.
+
+Bindings for [Next.js](https://nextjs.org/) are provided by the [@unologin/next](https://unologin.github.io/next-sdk/) package. 
+
+This package only provides server-side code and therefore requires a separate front end. 
+
+See [@unologin/web-sdk](https://unologin.github.io/web-sdk/) for web-based frontend implementations.
 
 Visit [our documentation page](https://dashboard.unolog.in/docs) for more docs & guides.
 
 # Installation
 
 ```
-npm install @unologin/node-api
+npm install @unologin/node-sdk
 ```
 
 or
 
 ```
-yarn add @unologin/node-api
+yarn add @unologin/node-sdk
 ```
 
 # Typescript
@@ -27,7 +35,7 @@ The below examples will use plain javascript for generality.
 Before using the library, make sure to set up your credentials.
 
 ```javascript
-const unologin = require('@unologin/node-api');
+const unologin = require('@unologin/node-sdk');
 
 unologin.setup(
   {
@@ -48,7 +56,7 @@ More elaborate working examples can be found in ```example/main.js``` in this re
 ### Getting details for a single user
 
 ```javascript
-const unologin = require('@unologin/node-api');
+const unologin = require('@unologin/node-sdk');
 
 // user token may be retrieved using 
 // userToken = unologin.express.getUserToken(res) in express handlers
@@ -65,7 +73,7 @@ const user = unologin.rest.getUser(userToken);
 You can query you app's users using [this query schema](https://v1.unolog.in/schemas/apps/:appId/users/query). Omitting the query will return a cursor for all users.
 
 ```javascript
-const unologin = require('@unologin/node-api');
+const unologin = require('@unologin/node-sdk');
 
 // pass an optional query (object or URLSearchParams)
 // returns a GetCursor instance which can be used to iterate over users
@@ -156,10 +164,8 @@ Use ```onLoginSuccess``` to add custom synchronous or asynchronous logic to be e
 ```javascript
 
 unologin.express.onLoginSuccess(
-  function (req, res)
+  function (req, res, user)
   {
-    const user = unologin.express.getUserToken(res);
-
     console.log(`User ${user.asuId} just logged in!`);
   },
 );
@@ -198,7 +204,9 @@ app.post('/logout', function(req, res)
 
 Use the ```parseLogin``` middleware to parse the login token sent by the user and validate it. 
 
-**IMPORTANT:** This does **not** require a login token to be present to call the following handlers! (see ```requireLogin```) 
+**IMPORTANT:** ```parseLogin``` does **not** require a login token to be present! 
+
+Use ```requireLogin``` to make sure the user is logged in!
 
 ```javascript
 // parsing login token everywhere 

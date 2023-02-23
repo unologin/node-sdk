@@ -1,7 +1,7 @@
 {
-  "name": "@unologin/node-api",
-  "version": "2.4.0-nextjs",
-  "description": "unologin node api including express handlers",
+  "name": "@unologin/node-sdk",
+  "version": "3.0.0",
+  "description": "unolog.in Node.js SDK including Express.js handlers.",
   "main": "build/main.js",
   "files": [
     "build/"
@@ -15,21 +15,23 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/unologin/node-api.git"
+    "url": "git+https://github.com/unologin/node-sdk.git"
   },
   "keywords": [
     "unologin",
     "api",
     "backend",
     "node",
-    "sdk"
+    "sdk",
+    "auth",
+    "oauth"
   ],
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/unologin/node-api/issues"
+    "url": "https://github.com/unologin/node-sdk/issues"
   },
-  "homepage": "https://github.com/unologin/node-api#readme",
+  "homepage": "https://unologin.github.io/node-sdk/",
   "devDependencies": {
     "@alex_neo/jest-expect-message": "^1.0.5",
     "@types/cookie-parser": "^1.4.2",

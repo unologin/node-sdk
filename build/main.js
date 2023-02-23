@@ -1,6 +1,6 @@
 "use strict";
 /**
- * Entry point for the @unologin/node-api package.
+ * Entry point for the @unologin/node-sdk package.
  *
  * @module main
  *
