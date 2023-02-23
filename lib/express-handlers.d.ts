@@ -85,7 +85,7 @@ export default class ExpressHandlers extends HttpHandlers<Request, Response> {
      *
      * Only executes the next handler if the user is logged in.
      *
-     * Will trigger the {@link AuthErrorHandler} otherwise.
+     * Will trigger the {@link http-handlers.AuthErrorHandler} otherwise.
      *
      * *Must* be preceded by the {@link parseLogin} middleware.
      *
