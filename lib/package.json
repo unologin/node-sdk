@@ -1,11 +1,11 @@
 {
   "name": "@unologin/node-sdk",
-  "version": "3.0.0",
-  "description": "unolog.in Node.js SDK including Express.js handlers.",
+  "version": "1.0.0",
+  "description": "unolog·in Node.js SDK including Express.js handlers.",
   "main": "main.js",
   "private": false,
   "scripts": {
-    "build": "tsc && cp package.json lib/",
+    "build": "tsc && cp package.json LICENSE README.md lib/",
     "example": "node ./example/example-express-server.js",
     "test": "jest",
     "lint": "eslint --fix --ext .ts,.js ./src ./test ./example"
