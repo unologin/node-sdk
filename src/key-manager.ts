@@ -14,6 +14,30 @@ export interface PublicKey
 }
 
 /**
+ * Ensures that the key passed has the correct structure.
+ * @param key key
+ * @returns key if valid
+ * @throws Error otherwise
+ */
+export function checkLoginTokenKey(key : unknown) : PublicKey
+{
+  if (
+    typeof(key) === 'object' &&
+    typeof((key as any)['data']) === 'string' &&
+    (key as any)['data'].startsWith('-----BEGIN PUBLIC KEY-----\n')
+  )
+  {
+    return key as PublicKey;
+  }
+  else 
+  {
+    throw new Error(
+      'Invalid public key returned by API: ' + JSON.stringify(key),
+    );
+  }
+}
+
+/**
  * Handles fetching and caching of public keys.
  */
 export default class KeyManager
@@ -28,27 +52,13 @@ export default class KeyManager
   ) {}
 
   /**
-   * Ensures that the key passed has the correct structure.
+   * Alias for {@link checkLoginTokenKey}.
    * @param key key
-   * @returns key if valid
-   * @throws Error otherwise
+   * @returns PublicKey
    */
-  checkLoginTokenKey(key : unknown) : PublicKey
+  public checkLoginTokenKey(key : unknown) : PublicKey
   {
-    if (
-      typeof(key) === 'object' &&
-      typeof((key as any)['data']) === 'string' &&
-      (key as any)['data'].startsWith('-----BEGIN PUBLIC KEY-----\n')
-    )
-    {
-      return key as PublicKey;
-    }
-    else 
-    {
-      throw new Error(
-        'Invalid public key returned by API: ' + JSON.stringify(key),
-      );
-    }
+    return checkLoginTokenKey(key);
   }
  
   /**

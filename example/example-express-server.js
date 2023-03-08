@@ -4,8 +4,8 @@ require('dotenv').config();
 
 const express = require('express');
 
-// replace this with require('@unologin/node-api') in your project
-const unologin = require('../build/main');
+// replace this with require('@unologin/node-sdk') in your project
+const unologin = require('../lib/main');
 
 const cookieParser = require('cookie-parser');
 

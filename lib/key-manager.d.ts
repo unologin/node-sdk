@@ -9,6 +9,13 @@ export interface PublicKey {
     expiresIn: number;
 }
 /**
+ * Ensures that the key passed has the correct structure.
+ * @param key key
+ * @returns key if valid
+ * @throws Error otherwise
+ */
+export declare function checkLoginTokenKey(key: unknown): PublicKey;
+/**
  * Handles fetching and caching of public keys.
  */
 export default class KeyManager {
@@ -17,10 +24,9 @@ export default class KeyManager {
     /** */
     constructor(client: Pick<IUnologinClient, 'request'>);
     /**
-     * Ensures that the key passed has the correct structure.
+     * Alias for {@link checkLoginTokenKey}.
      * @param key key
-     * @returns key if valid
-     * @throws Error otherwise
+     * @returns PublicKey
      */
     checkLoginTokenKey(key: unknown): PublicKey;
     /**
