@@ -441,6 +441,37 @@ export abstract class HttpHandlers<
   }
 
   /**
+   * 
+   * @param req req
+   * @returns URL
+   */
+  getLoginUrlFromLoginEvent(req : Request)
+  {
+    const origin = typeof(req.query.origin) === 'string' ? 
+      new URL(decodeURIComponent(req.query.origin)) :
+      null
+    ;
+
+    // TODO: move this outside of this function to avoid parsing 
+    // the frontendUrl every time this function is called.
+    const expectedHostname = new URL(
+      this.client.getOptions().realm.frontendUrl,
+    ).hostname;
+
+    if (origin?.hostname === expectedHostname)
+    {
+      return origin;
+    }
+    else
+    {
+      throw new Error(
+        `Origin ${origin?.hostname} does not ` +
+      `match the configured realm ${expectedHostname}`,
+      );
+    }
+  }
+
+  /**
    * Handles the unologin login event. 
    * Returns a URL to redirect the user to.
    * 
@@ -452,6 +483,8 @@ export abstract class HttpHandlers<
    */
   async handleLoginEvent(req : Request, res : Response)
   {
+    const returnUrl = this.getLoginUrlFromLoginEvent(req);
+
     // token provided by the user
     const token = (req.query.token || req.body.token) as string;
     
@@ -486,19 +519,11 @@ export abstract class HttpHandlers<
       }
     }
 
-    // construct a url for the unologin front end to consume the result
-    const url = new URL(
-      req.query.origin && decodeURIComponent(req.query.origin as string) || 
-      this.client.getOptions().realm.frontendUrl,
-    );
-
-    url.searchParams.set('loginHandlerSuccess', msg ? 'false' : 'true');
-    msg && url.searchParams.set('loginHandlerMsg', msg);
-    url.searchParams.set('appId', this.client.getOptions().appId);
-    url.searchParams.set('client', 'Web');
-
+    returnUrl.searchParams.set('loginHandlerSuccess', msg ? 'false' : 'true');
+    msg && returnUrl.searchParams.set('loginHandlerMsg', msg);
+    
     return {
-      url,
+      url: returnUrl,
     };
   }
 }

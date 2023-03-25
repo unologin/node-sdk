@@ -246,9 +246,66 @@ describe('handleLoginEvent', () =>
 
       const { req, res } = createMocks();
 
+      req.query.origin = unologin.getOptions().realm.frontendUrl;
+
       await expect(
         httpHandlers.handleLoginEvent(req, res),
       ).rejects.toBe(error);
+    }
+  });
+
+  it('Rejects if the origin does not match the realm.', async () => 
+  {
+    const origins = 
+    [
+      undefined,
+      null,
+      false,
+      'https://not.unolog.in',
+    ];
+
+    const getLoginUrlFromLoginEvent = jest.spyOn(
+      httpHandlers,
+      'getLoginUrlFromLoginEvent',
+    );
+
+    for (const origin of origins)
+    {
+      const { req, res } = createMocks();
+
+      req.query.origin = origin as any;
+
+      await expect(
+        httpHandlers.handleLoginEvent(req, res),
+        // TODO: check that the correct error is thrown
+      ).rejects.toBeTruthy();
+
+      expect(getLoginUrlFromLoginEvent)
+        .toHaveBeenLastCalledWith(req);
+    }
+  });
+
+  it('Accepts any origins from the correct realm.', async () => 
+  {
+    const base = unologin.getOptions().realm.frontendUrl;
+
+    const origins = 
+    [
+      base,
+      new URL('/login/abc', base).href,
+      new URL('/?key=value', base).href,
+    ];
+
+    for (const origin of origins)
+    {
+      const { req } = createMocks();
+
+      req.query.origin = origin as any;
+
+      const url = httpHandlers.getLoginUrlFromLoginEvent(req);
+
+      expect(url.href)
+        .toBe(new URL(origin).href);
     }
   });
 

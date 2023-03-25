@@ -1,6 +1,6 @@
 {
   "name": "@unologin/node-sdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "unolog·in Node.js SDK including Express.js handlers.",
   "main": "main.js",
   "private": false,

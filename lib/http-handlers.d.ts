@@ -178,6 +178,12 @@ export declare abstract class HttpHandlers<Request extends ExpressOrNextRequest 
      */
     protected resetLoginCookies(req: Request, res: Response): void;
     /**
+     *
+     * @param req req
+     * @returns URL
+     */
+    getLoginUrlFromLoginEvent(req: Request): URL;
+    /**
      * Handles the unologin login event.
      * Returns a URL to redirect the user to.
      *
