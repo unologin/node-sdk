@@ -443,9 +443,14 @@ export abstract class HttpHandlers<
   /**
    * 
    * @param req req
+   * @param _ res (not used)
    * @returns URL
    */
-  getLoginUrlFromLoginEvent(req : Request)
+  getLoginUrlFromLoginEvent(
+    req : Request, 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _ : Response,
+  )
   {
     const origin = typeof(req.query.origin) === 'string' ? 
       new URL(decodeURIComponent(req.query.origin)) :
@@ -483,7 +488,7 @@ export abstract class HttpHandlers<
    */
   async handleLoginEvent(req : Request, res : Response)
   {
-    const returnUrl = this.getLoginUrlFromLoginEvent(req);
+    const returnUrl = this.getLoginUrlFromLoginEvent(req, res);
 
     // token provided by the user
     const token = (req.query.token || req.body.token) as string;

@@ -281,7 +281,7 @@ describe('handleLoginEvent', () =>
       ).rejects.toBeTruthy();
 
       expect(getLoginUrlFromLoginEvent)
-        .toHaveBeenLastCalledWith(req);
+        .toHaveBeenLastCalledWith(req, res);
     }
   });
 
@@ -298,11 +298,11 @@ describe('handleLoginEvent', () =>
 
     for (const origin of origins)
     {
-      const { req } = createMocks();
+      const { req, res } = createMocks();
 
       req.query.origin = origin as any;
 
-      const url = httpHandlers.getLoginUrlFromLoginEvent(req);
+      const url = httpHandlers.getLoginUrlFromLoginEvent(req, res);
 
       expect(url.href)
         .toBe(new URL(origin).href);

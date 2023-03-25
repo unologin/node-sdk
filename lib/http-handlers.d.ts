@@ -180,9 +180,10 @@ export declare abstract class HttpHandlers<Request extends ExpressOrNextRequest 
     /**
      *
      * @param req req
+     * @param _ res (not used)
      * @returns URL
      */
-    getLoginUrlFromLoginEvent(req: Request): URL;
+    getLoginUrlFromLoginEvent(req: Request, _: Response): URL;
     /**
      * Handles the unologin login event.
      * Returns a URL to redirect the user to.
