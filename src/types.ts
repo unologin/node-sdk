@@ -51,7 +51,7 @@ export type UserHandle =
 }
  
 
-export type UserDocument<RequiredFields extends string = never> = 
+export type UserDocument<RequiredFields extends string = any> = 
 {
   _id: string;
 
