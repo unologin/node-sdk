@@ -61,7 +61,7 @@ const verifyTokenAndRefresh = jest.spyOn(
 const mockToken = (props : Partial<UserToken> = {}) : UserToken => (
   {
     iat: Date.now(),
-    asuId: 'my-asuId',
+    id: 'my-id',
     appId: 'my-appId',
     userClasses: [],
     r: Date.now() + 1000 * 60 * 60,

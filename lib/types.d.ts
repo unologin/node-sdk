@@ -12,10 +12,10 @@
  * @see {@link http-handlers.HttpHandlers.getUserTokenOptional}
  */
 export type UserToken = {
+    /** app-specific user id */
+    id: string;
     /** your appId */
     appId: string;
-    /** app-specific user id */
-    asuId: string;
     userClasses: string[];
     /** issued at timestamp */
     iat: number;
@@ -25,7 +25,7 @@ export type UserToken = {
 /**
  * User handle can be used by many API calls that relate to a specific user.
  *
- * If the user handle does not contain an ```asuId```, it is inferred by verifying the login token.
+ * If the user handle does not contain an ```id```, it is inferred by verifying the login token.
  *
  * This avoids having to make multiple requests to obtain user information.
  *
@@ -39,7 +39,7 @@ export type UserToken = {
  *
  */
 export type UserHandle = {
-    asuId: string;
+    id: string;
 } | {
     appLoginToken: string;
 };

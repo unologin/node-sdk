@@ -100,7 +100,7 @@ describe('loginEventHandler', () =>
   const user =
   {
     appId,
-    asuId: '5ebac35e9bdf9a2ebbb8e92f',
+    id: '5ebac35e9bdf9a2ebbb8e92f',
     userClasses: ['users_default'],
   };
 

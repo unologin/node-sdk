@@ -62,7 +62,7 @@ test('exported REST API', async () =>
   );
 
   const user = await restApi.getUserDocument(
-    { asuId: 'abc123' },
+    { id: 'abc123' },
   );
 
   expect(user)

@@ -41,7 +41,7 @@ export function validateUserHandleSchema(
 {
   if (
     ('appLoginToken' in handle && (typeof handle.appLoginToken) === 'string') ||
-    ('asuId' in handle && (typeof handle.asuId) === 'string')
+    ('id' in handle && (typeof handle.id) === 'string')
   )
   {
     return handle;

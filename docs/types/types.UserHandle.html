@@ -16,9 +16,9 @@
 <li><a href="../modules/types.html">types</a></li>
 <li><a href="types.UserHandle.html">UserHandle</a></li></ul>
 <h1>Type alias UserHandle</h1></div>
-<div class="tsd-signature">User<wbr/>Handle<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span><br/><span>    </span>asuId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-symbol">{ </span><br/><span>    </span>appLoginToken<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span></div>
+<div class="tsd-signature">User<wbr/>Handle<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span><br/><span>    </span>id<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-symbol">{ </span><br/><span>    </span>appLoginToken<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span></div>
 <div class="tsd-comment tsd-typography"><p>User handle can be used by many API calls that relate to a specific user.</p>
-<p>If the user handle does not contain an <code>asuId</code>, it is inferred by verifying the login token.</p>
+<p>If the user handle does not contain an <code>id</code>, it is inferred by verifying the login token.</p>
 <p>This avoids having to make multiple requests to obtain user information.</p>
 <p><strong>IMPORTANT</strong>: Generally, a user handle may be set by the requester and should
 not be trusted until verified. </p>
@@ -28,7 +28,7 @@ raise an authentication error if invalid.</p>
 <h3>See</h3><p><a href="types.UserToken.html">UserToken</a> for an authenticated UserHandle.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/unologin/node-api/blob/b9d1254/src/types.ts#L45">src/types.ts:45</a></li></ul></aside></div>
+<li>Defined in <a href="https://github.com/unologin/node-api/blob/182f7dd/src/types.ts#L48">src/types.ts:48</a></li></ul></aside></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tsd-navigation settings">
 <details class="tsd-index-accordion"><summary class="tsd-accordion-summary">
