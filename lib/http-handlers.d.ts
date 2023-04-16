@@ -10,6 +10,10 @@ export type ExpressOrNextRequest = ExpressRequest | NextApiRequest;
 export type ExpressOrNextResponse = ExpressResponse | NextApiResponse;
 export type AuthErrorHandler<Request extends ExpressOrNextRequest = ExpressOrNextRequest, Response extends ExpressOrNextResponse = ExpressOrNextResponse> = (req: Request, res: Response, error: APIError) => unknown | Promise<unknown>;
 export type LoginSuccessHandler<Request extends ExpressOrNextRequest = ExpressOrNextRequest, Response extends ExpressOrNextResponse = ExpressOrNextResponse> = (req: Request, res: Response, user: UserToken) => unknown | Promise<unknown>;
+export type CookieSetup = {
+    name: string;
+    options: CookieOptions;
+};
 /**
  * Low-level HTTP request handlers and utility functions
  * that can be used by Express, Next, or other server frameworks.
@@ -29,12 +33,21 @@ export declare abstract class HttpHandlers<Request extends ExpressOrNextRequest 
      * @returns void
      */
     protected authErrorHandler: AuthErrorHandler<Request, Response>;
-    /** List of cookies used and their default options. */
-    private cookies;
     /**
      * @param client unologin instance
      */
     constructor(client: IUnologinClient);
+    /** */
+    get cookies(): {
+        login: {
+            name: string;
+            options: CookieOptions;
+        };
+        loginState: {
+            name: string;
+            options: CookieOptions;
+        };
+    };
     /**
      * Completes cookie options.
      * @param opts cookie options
@@ -67,6 +80,15 @@ export declare abstract class HttpHandlers<Request extends ExpressOrNextRequest 
      * @returns void
      */
     protected setCachedUserToken(res: Response, userToken: UserToken | null): void;
+    /**
+     * Get login cookie from cookies object.
+     *
+     * @param cookies cookies
+     * @returns cookie value
+     */
+    getLoginCookie(cookies: {
+        [k: string]: string | undefined;
+    }): string | null;
     /**
      * Returns a {@link types.UserHandle} from the current request.
      * Returns ```null``` if the request contains no login information.

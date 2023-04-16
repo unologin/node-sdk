@@ -104,6 +104,12 @@ export interface Options
    * Will only take effect if ```process.env.NODE_ENV === 'development'```. 
    */
   disableSecureCookies?: boolean;
+
+  /** Name for the login cookie (optional). */
+  loginCookieName: string;
+
+  /** Name for the login state cookie (optional) */
+  loginStateCookieName: string;
 }
 
 
@@ -165,7 +171,11 @@ export function decodeApiKey(key : string | undefined) : ApiKeyPayload
  */
 export function setup(
   opts : Omit<
-    Options, keyof typeof defaultOptions | 'appId'
+    Options, 
+    keyof typeof defaultOptions | 
+    'appId' | 
+    'loginCookieName' |
+    'loginStateCookieName'
   > & Partial<Options>,
 ) : void
 {
@@ -175,11 +185,22 @@ export function setup(
     
     const currentOptions = options || defaultOptions;
 
-    options =
+    const updatedOpts = 
     {
       ...currentOptions,
       ...opts,
-      appId: token.appId,
+    };
+
+    const appId = token.appId;
+
+    options =
+    {
+      ...updatedOpts,
+      appId,
+      loginCookieName: updatedOpts.loginCookieName || 
+        `_uno_appLoginToken_${appId}`,
+      loginStateCookieName: updatedOpts.loginStateCookieName || 
+        `_uno_loginState_${appId}`,
     };
   }
   catch (e)

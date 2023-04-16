@@ -47,6 +47,12 @@ Response extends ExpressOrNextResponse = ExpressOrNextResponse
   user : UserToken,
 ) => unknown | Promise<unknown>;
 
+export type CookieSetup = 
+{
+  name: string;
+  options: CookieOptions;
+}
+
 /**
  * Low-level HTTP request handlers and utility functions
  * that can be used by Express, Next, or other server frameworks.
@@ -79,33 +85,35 @@ export abstract class HttpHandlers<
     res.send('Auth error: ' + error.message || 'unknown error');
   };
   
-  /** List of cookies used and their default options. */
-  private cookies =
-  {
-    // secure session cookie for the server to read
-    login: 
-    {
-      name: '_uno_appLoginToken',
-      options: <CookieOptions>
-      {
-        httpOnly: true,
-      },
-    },
-    // login state for client scripts to read
-    loginState:
-    {
-      name: '_uno_loginState',
-      options: <CookieOptions>
-      {
-        httpOnly: false,
-      },
-    },
-  };
-
   /**
    * @param client unologin instance
    */
   constructor(public readonly client : IUnologinClient) {}
+
+  /** */
+  get cookies()
+  {
+    return {
+      // secure session cookie for the server to read
+      login: 
+      {
+        name: this.client.getOptions().loginCookieName,
+        options: <CookieOptions>
+        {
+          httpOnly: true,
+        },
+      },
+      // login state for client scripts to read
+      loginState:
+      {
+        name: this.client.getOptions().loginStateCookieName,
+        options: <CookieOptions>
+        {
+          httpOnly: false,
+        },
+      },
+    };
+  }
 
   /**
    * Completes cookie options.
@@ -185,6 +193,19 @@ export abstract class HttpHandlers<
   }
 
   /**
+   * Get login cookie from cookies object.
+   * 
+   * @param cookies cookies
+   * @returns cookie value
+   */
+  public getLoginCookie(
+    cookies : { [k: string]: string | undefined },
+  ) : string | null
+  {
+    return cookies?.[this.client.getOptions().loginCookieName] || null;
+  }
+
+  /**
    * Returns a {@link types.UserHandle} from the current request.
    * Returns ```null``` if the request contains no login information.
    * 
@@ -215,7 +236,7 @@ export abstract class HttpHandlers<
     }
     else 
     {
-      const appLoginToken = req.cookies[this.cookies.login.name];
+      const appLoginToken = this.getLoginCookie(req.cookies);
 
       if (appLoginToken)
       {
@@ -289,7 +310,7 @@ export abstract class HttpHandlers<
       return cached;
     }
 
-    const token = req.cookies?.[this.cookies.login.name];
+    const token = this.getLoginCookie(req.cookies);
   
     // only try to parse the token if the user provides one
     if (token)
@@ -400,24 +421,26 @@ export abstract class HttpHandlers<
     options : CookieOptions = {},
   ) 
   {
+    const cookieSetup = this.cookies;
+
     this.setCookie(
       req, res,
-      this.cookies.login.name,
+      cookieSetup.login.name,
       cookie.value,
       {
         maxAge: cookie.maxAge,
-        ...this.cookies.login.options,
+        ...cookieSetup.login.options,
         ...this.completeCookieOptions(options),
       },
     );
 
     this.setCookie(
       req, res,
-      this.cookies.loginState.name,
+      cookieSetup.loginState.name,
       'success',
       {
         maxAge: cookie.maxAge,
-        ...this.cookies.loginState.options,
+        ...cookieSetup.loginState.options,
         ...this.completeCookieOptions(options),
       },
     );

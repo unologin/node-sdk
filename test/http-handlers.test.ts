@@ -41,6 +41,9 @@ unologin.setup(
     {
       throw new Error('Should not make API requests while testing.');
     },
+
+    loginCookieName: '_uno_appLoginToken',
+    loginStateCookieName: '_uno_loginState',
   },
 );
 

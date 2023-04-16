@@ -55,6 +55,8 @@ unologin.setup(
       frontendUrl: 'https://mock-frontend.unolog.in',
     },
     agent: supermock,
+    loginCookieName: '_uno_appLoginToken',
+    loginStateCookieName: '_uno_loginState',
   },
 );
 

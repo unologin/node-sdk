@@ -66,6 +66,10 @@ export interface Options {
      * Will only take effect if ```process.env.NODE_ENV === 'development'```.
      */
     disableSecureCookies?: boolean;
+    /** Name for the login cookie (optional). */
+    loginCookieName: string;
+    /** Name for the login state cookie (optional) */
+    loginStateCookieName: string;
 }
 export interface ApiKeyPayload {
     appId: string;
@@ -92,7 +96,7 @@ export declare function decodeApiKey(key: string | undefined): ApiKeyPayload;
  * @param opts setup
  * @returns void
  */
-export declare function setup(opts: Omit<Options, keyof typeof defaultOptions | 'appId'> & Partial<Options>): void;
+export declare function setup(opts: Omit<Options, keyof typeof defaultOptions | 'appId' | 'loginCookieName' | 'loginStateCookieName'> & Partial<Options>): void;
 /**
  * @returns setup
  */
