@@ -56,7 +56,7 @@ export type UserHandle =
 
 export type UserDocument<RequiredFields extends string = any> = 
 {
-  _id: string;
+  id: string;
 
   appId: string;
   

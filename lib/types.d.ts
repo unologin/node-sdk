@@ -44,7 +44,7 @@ export type UserHandle = {
     appLoginToken: string;
 };
 export type UserDocument<RequiredFields extends string = any> = {
-    _id: string;
+    id: string;
     appId: string;
     createdAt: string;
     profile: {
